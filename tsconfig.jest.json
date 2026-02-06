@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "node", "react"],
+    "esModuleInterop": true
+  },
+  "include": [
+    "test/**/*.ui.test.tsx",
+    "test/**/*.ui.test.ts",
+    "src/**/*.tsx",
+    "src/panel.tsx"
+  ],
+  "exclude": [
+    "test/**/*.test.ts",
+    "test/suite",
+    "node_modules"
+  ]
+}

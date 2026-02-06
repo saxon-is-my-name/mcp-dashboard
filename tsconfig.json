@@ -3,12 +3,13 @@
     "module": "commonjs",
     "target": "es2020",
     "outDir": "out",
-    "lib": ["es2020"],
+    "lib": ["es2020", "dom"],
     "sourceMap": true,
     "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
-    "jsx": "react"
+    "jsx": "react-jsx",
+    "types": ["node", "vscode", "mocha"]
   },
-  "exclude": ["node_modules", ".vscode-test", "out"]
+  "exclude": ["node_modules", ".vscode-test", "out", "test/**/*.ui.test.*", "**/*.ui.test.*"]
 }
