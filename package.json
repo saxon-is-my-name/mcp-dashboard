@@ -1,0 +1,48 @@
+{
+  "name": "vscode-mcp-extension",
+  "displayName": "MCP Extension",
+  "description": "VS Code extension for MCP dashboard integration.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": ">=1.70.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:mcp.showPanel"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mcp.showPanel",
+        "title": "Show MCP Panel"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && xvfb-run -a --server-args='-screen 0 1280x1024x24' node ./test/suite/index.js --disable-gpu --no-sandbox",
+    "unit-test": "npm run compile && mocha -r ts-node/register test/unit/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.109.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^8.0.0",
+    "mocha": "^10.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.0.0"
+  }
+}
