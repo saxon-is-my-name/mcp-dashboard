@@ -5,14 +5,12 @@
   "version": "0.0.1",
   "publisher": "mcp-dashboard",
   "engines": {
-    "vscode": ">=1.70.0"
+    "vscode": ">=1.109.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:mcpView"
-  ],
+  "activationEvents": [],
   "main": "./out/src/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -29,7 +27,8 @@
         {
           "type": "webview",
           "id": "mcpView",
-          "name": "Servers & Commands"
+          "name": "Servers & Commands",
+          "icon": "$(server)"
         }
       ]
     },

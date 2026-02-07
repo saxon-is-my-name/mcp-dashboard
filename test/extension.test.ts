@@ -240,3 +240,116 @@ describe('Message Handling and Output Panel', () => {
   });
 });
 
+describe('MCP Tool Discovery - Phase 1', () => {
+  it('should list tools from vscode.lm.tools', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    // Access the exported tool listing function
+    const extExports = ext!.exports;
+    assert.ok(extExports.getTools, 'getTools function should be exported');
+    
+    const tools = await extExports.getTools();
+    assert.ok(Array.isArray(tools), 'getTools should return an array');
+  });
+
+  it('should group tools by server', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const extExports = ext!.exports;
+    const groupedTools = await extExports.getGroupedTools();
+    
+    assert.ok(typeof groupedTools === 'object', 'groupedTools should be an object');
+    assert.ok(!Array.isArray(groupedTools), 'groupedTools should not be an array');
+    
+    // Check structure: should be { serverName: [tools] }
+    for (const serverName in groupedTools) {
+      assert.ok(Array.isArray(groupedTools[serverName]), `Tools for ${serverName} should be an array`);
+    }
+  });
+
+  it('should handle empty tool list', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const extExports = ext!.exports;
+    const tools = await extExports.getTools();
+    
+    // Should return empty array if no tools available, not throw
+    assert.ok(Array.isArray(tools), 'Should return array even if empty');
+  });
+
+  it('should send tools to webview on initialization', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let postMessageCalled = false;
+    let messageData: any = null;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          postMessageCalled = true;
+          messageData = data;
+          return Promise.resolve(true);
+        }
+      }
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for async tool loading
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    assert.ok(postMessageCalled, 'postMessage should be called to send tools');
+    assert.ok(messageData, 'Message data should be provided');
+    assert.strictEqual(messageData.type, 'toolsUpdate', 'Message type should be toolsUpdate');
+    assert.ok(messageData.tools, 'Message should contain tools data');
+  });
+
+  it('should handle tool discovery errors gracefully', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const extExports = ext!.exports;
+    
+    // Should not throw even if vscode.lm.tools fails
+    try {
+      const tools = await extExports.getTools();
+      assert.ok(Array.isArray(tools), 'Should return array on error');
+    } catch (error) {
+      assert.fail('getTools should not throw, should return empty array on error');
+    }
+  });
+
+  it('should parse tool names to extract server information', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const extExports = ext!.exports;
+    
+    // Tools from vscode.lm.tools have names like "serverName_toolName"
+    const groupedTools = await extExports.getGroupedTools();
+    
+    // Each server group should have tools with proper structure
+    for (const serverName in groupedTools) {
+      const tools = groupedTools[serverName];
+      for (const tool of tools) {
+        assert.ok(tool.name, 'Tool should have a name');
+        assert.ok(tool.description !== undefined, 'Tool should have a description');
+      }
+    }
+  });
+});
+
