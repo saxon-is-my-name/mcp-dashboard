@@ -1,19 +1,27 @@
-const glob = require('glob');
 const path = require('path');
 const Mocha = require('mocha');
+const glob = require('glob');
 
 function run() {
-  const mocha = new Mocha({
-    ui: 'bdd',
-    color: true
-  });
-  const testFiles = glob.sync(path.resolve(__dirname, '../**/*.test.{js,ts}'));
-  for (const file of testFiles) {
-    mocha.addFile(file);
-  }
-  mocha.run(failures => {
-    process.exitCode = failures ? 1 : 0;
+  return new Promise((resolve, reject) => {
+    const mocha = new Mocha({ ui: 'bdd', color: true });
+    const testsRoot = path.resolve(__dirname, '..');
+
+    // Only match .js files — TypeScript is already compiled to out/
+    const testFiles = glob.sync('**/*.test.js', { cwd: testsRoot });
+
+    for (const file of testFiles) {
+      mocha.addFile(path.resolve(testsRoot, file));
+    }
+
+    mocha.run(failures => {
+      if (failures > 0) {
+        reject(new Error(`${failures} tests failed.`));
+      } else {
+        resolve();
+      }
+    });
   });
 }
 
-run();
+module.exports = { run };
