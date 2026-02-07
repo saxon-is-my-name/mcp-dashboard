@@ -17,27 +17,17 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
-		// Mock data for servers and commands
-		const servers = [
-			{ name: 'Server1', host: '127.0.0.1', port: 8080 },
-			{ name: 'Server2', host: '192.168.1.1', port: 9090 }
-		];
-
-		const commands = {
-			'Server1': [
-				{ name: 'status', description: 'Get status' },
-				{ name: 'restart', description: 'Restart server' }
-			],
-			'Server2': [
-				{ name: 'deploy', description: 'Deploy app' }
-			]
-		};
+		// Get the URI for the bundled webview script
+		const scriptUri = webview.asWebviewUri(
+			vscode.Uri.joinPath(this._extensionUri, 'out', 'webview.js')
+		);
 
 		return `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource};">
 	<title>MCP Dashboard</title>
 	<style>
 		body {
@@ -98,56 +88,7 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
 	<div id="root"></div>
-	<script>
-		const servers = ${JSON.stringify(servers)};
-		const commands = ${JSON.stringify(commands)};
-		
-		let selectedServer = servers[0]?.name || '';
-		let selectedCommand = '';
-
-		function render() {
-			const root = document.getElementById('root');
-			root.innerHTML = \`
-				<div class="server-list">
-					<h2>Servers</h2>
-					\${servers.map(s => \`
-						<button 
-							class="\${selectedServer === s.name ? 'selected' : ''}" 
-							onclick="selectServer('\${s.name}')"
-						>
-							<div class="server-name">\${s.name}</div>
-							<div class="server-address">\${s.host}:\${s.port}</div>
-						</button>
-					\`).join('')}
-				</div>
-				<div class="command-list">
-					<h2>Commands</h2>
-					\${commands[selectedServer]?.map(c => \`
-						<button 
-							class="\${selectedCommand === c.name ? 'selected' : ''}"
-							onclick="selectCommand('\${c.name}')"
-						>
-							<div class="command-name">\${c.name}</div>
-							<div class="command-description">\${c.description}</div>
-						</button>
-					\`).join('') || '<p>No commands available</p>'}
-				</div>
-			\`;
-		}
-
-		function selectServer(name) {
-			selectedServer = name;
-			selectedCommand = '';
-			render();
-		}
-
-		function selectCommand(name) {
-			selectedCommand = name;
-			render();
-		}
-
-		render();
-	</script>
+	<script src="${scriptUri}"></script>
 </body>
 </html>`;
 	}

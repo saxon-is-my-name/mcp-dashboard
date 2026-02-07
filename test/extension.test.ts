@@ -47,3 +47,64 @@ describe('MCP Sidebar View', () => {
   });
 });
 
+describe('Webview Bundle Integration', () => {
+  it('should generate HTML with root div', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    // Create a mock webview
+    const mockWebview = {
+      asWebviewUri: (uri: vscode.Uri) => {
+        return vscode.Uri.parse('vscode-webview://test' + uri.path);
+      }
+    } as any;
+    
+    // Access the private method via reflection
+    const html = (provider as any)._getHtmlForWebview(mockWebview);
+    
+    assert.ok(html.includes('<div id="root"></div>'), 'HTML must contain root div');
+    assert.ok(html.includes('<!DOCTYPE html>'), 'HTML must be valid HTML5');
+  });
+
+  it('should generate HTML with bundled script tag', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    // Create a mock webview
+    const mockWebview = {
+      asWebviewUri: (uri: vscode.Uri) => {
+        return vscode.Uri.parse('vscode-webview://test' + uri.path);
+      }
+    } as any;
+    
+    const html = (provider as any)._getHtmlForWebview(mockWebview);
+    
+    // Should contain script tag with bundled webview.js
+    assert.ok(html.includes('<script'), 'HTML must contain script tag');
+    assert.ok(html.includes('webview.js'), 'Script tag must reference webview.js bundle');
+  });
+
+  it('should NOT contain inline vanilla JavaScript', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    const mockWebview = {
+      asWebviewUri: (uri: vscode.Uri) => {
+        return vscode.Uri.parse('vscode-webview://test' + uri.path);
+      }
+    } as any;
+    
+    const html = (provider as any)._getHtmlForWebview(mockWebview);
+    
+    // Ensure inline JS is removed (checking for functions that were previously inline)
+    assert.ok(!html.includes('function render()'), 'Should not contain inline render function');
+    assert.ok(!html.includes('function selectServer'), 'Should not contain inline selectServer function');
+  });
+});
+
