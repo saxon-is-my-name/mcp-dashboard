@@ -22,4 +22,130 @@ describe('MCP Panel UI', () => {
     render(<MCPPanel servers={mockServers} commands={mockCommands} />);
     expect(screen.getByText('Server1')).toBeInTheDocument();
   });
+
+  describe('Server List', () => {
+    it('should render all servers from mock data', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      expect(screen.getByText('Server1')).toBeInTheDocument();
+      expect(screen.getByText('Server2')).toBeInTheDocument();
+    });
+
+    it('should display server details (host and port)', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      expect(screen.getByText(/127\.0\.0\.1:8080/)).toBeInTheDocument();
+      expect(screen.getByText(/192\.168\.1\.1:9090/)).toBeInTheDocument();
+    });
+
+    it('should highlight the selected server', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      const server1Button = screen.getByTestId('server-Server1');
+      expect(server1Button).toHaveClass('selected');
+    });
+  });
+
+  describe('Command List', () => {
+    it('should render commands for the selected server', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      // Server1 is selected by default
+      expect(screen.getByText('status')).toBeInTheDocument();
+      expect(screen.getByText('restart')).toBeInTheDocument();
+      expect(screen.queryByText('deploy')).not.toBeInTheDocument();
+    });
+
+    it('should display command descriptions', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      expect(screen.getByText(/Get status/)).toBeInTheDocument();
+      expect(screen.getByText(/Restart server/)).toBeInTheDocument();
+    });
+
+    it('should render empty list when no commands for server', () => {
+      const serversWithNoCommands = [
+        { name: 'EmptyServer', host: '127.0.0.1', port: 8080 }
+      ];
+      const emptyCommands = {};
+      
+      render(<MCPPanel servers={serversWithNoCommands} commands={emptyCommands} />);
+      
+      const commandList = screen.getByTestId('command-list');
+      expect(commandList).toBeEmptyDOMElement();
+    });
+  });
+
+  describe('Selection Handling', () => {
+    it('should change command list when different server is selected', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      // Initially Server1 commands are shown
+      expect(screen.getByText('status')).toBeInTheDocument();
+      expect(screen.queryByText('deploy')).not.toBeInTheDocument();
+      
+      // Click Server2
+      const server2Button = screen.getByTestId('server-Server2');
+      fireEvent.click(server2Button);
+      
+      // Now Server2 commands are shown
+      expect(screen.queryByText('status')).not.toBeInTheDocument();
+      expect(screen.getByText('deploy')).toBeInTheDocument();
+    });
+
+    it('should highlight selected server after click', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      const server1Button = screen.getByTestId('server-Server1');
+      const server2Button = screen.getByTestId('server-Server2');
+      
+      // Server1 selected by default
+      expect(server1Button).toHaveClass('selected');
+      expect(server2Button).not.toHaveClass('selected');
+      
+      // Click Server2
+      fireEvent.click(server2Button);
+      
+      // Server2 should now be selected
+      expect(server1Button).not.toHaveClass('selected');
+      expect(server2Button).toHaveClass('selected');
+    });
+
+    it('should highlight selected command after click', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      const statusButton = screen.getByTestId('command-status');
+      const restartButton = screen.getByTestId('command-restart');
+      
+      // No command selected initially
+      expect(statusButton).not.toHaveClass('selected');
+      
+      // Click status command
+      fireEvent.click(statusButton);
+      expect(statusButton).toHaveClass('selected');
+      expect(restartButton).not.toHaveClass('selected');
+      
+      // Click restart command
+      fireEvent.click(restartButton);
+      expect(statusButton).not.toHaveClass('selected');
+      expect(restartButton).toHaveClass('selected');
+    });
+
+    it('should clear command selection when server changes', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      // Select a command from Server1
+      const statusButton = screen.getByTestId('command-status');
+      fireEvent.click(statusButton);
+      expect(statusButton).toHaveClass('selected');
+      
+      // Switch to Server2
+      const server2Button = screen.getByTestId('server-Server2');
+      fireEvent.click(server2Button);
+      
+      // Command selection should be cleared
+      const deployButton = screen.getByTestId('command-deploy');
+      expect(deployButton).not.toHaveClass('selected');
+    });
+  });
 });

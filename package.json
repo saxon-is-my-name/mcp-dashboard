@@ -27,6 +27,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && xvfb-run -a --server-args='-screen 0 1280x1024x24' node ./test/suite/index.js",
+    "test:ui": "jest",
     "unit-test": "npm run compile && mocha -r ts-node/register test/unit/**/*.test.ts"
   },
   "devDependencies": {

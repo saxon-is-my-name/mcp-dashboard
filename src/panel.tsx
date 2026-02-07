@@ -20,23 +20,36 @@ const MCPPanel: React.FC<MCPPanelProps> = ({ servers, commands }) => {
 	const [selectedServer, setSelectedServer] = React.useState<string>(servers[0]?.name || '');
 	const [selectedCommand, setSelectedCommand] = React.useState<string>('');
 
+	const handleServerChange = (serverName: string) => {
+		setSelectedServer(serverName);
+		setSelectedCommand(''); // Clear command selection when server changes
+	};
+
 	return (
 		<div>
 			<div>
 				{servers.map(server => (
-					<button key={server.name} onClick={() => setSelectedServer(server.name)}>
-						{server.name}
+					<button 
+						key={server.name} 
+						data-testid={`server-${server.name}`}
+						className={selectedServer === server.name ? 'selected' : ''}
+						onClick={() => handleServerChange(server.name)}
+					>
+						<div>{server.name}</div>
+						<div>{server.host}:{server.port}</div>
 					</button>
 				))}
 			</div>
-			<div>
+			<div data-testid="command-list">
 				{commands[selectedServer]?.map(cmd => (
 					<button
 						key={cmd.name}
+						data-testid={`command-${cmd.name}`}
 						className={selectedCommand === cmd.name ? 'selected' : ''}
 						onClick={() => setSelectedCommand(cmd.name)}
 					>
-						{cmd.name}
+						<div>{cmd.name}</div>
+						<div>{cmd.description}</div>
 					</button>
 				))}
 			</div>
