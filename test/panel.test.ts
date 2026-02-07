@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { getMockServers, getMockCommands, MCPServer, MCPCommand } = require('../src/panel.js');
+const { getMockServers, getMockCommands, MCPServer, MCPCommand } = require('../../src/panel.js');
 
 describe('MCP Data Model', function () {
   it('Should create MCP server objects', function () {

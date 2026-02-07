@@ -5,7 +5,7 @@ const glob = require('glob');
 function run() {
   return new Promise((resolve, reject) => {
     const mocha = new Mocha({ ui: 'bdd', color: true });
-    const testsRoot = path.resolve(__dirname, '..');
+    const testsRoot = path.resolve(__dirname, '../../out/test');
 
     // Only match .js files — TypeScript is already compiled to out/
     const testFiles = glob.sync('**/*.test.js', { cwd: testsRoot });
