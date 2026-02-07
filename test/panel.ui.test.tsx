@@ -3,6 +3,23 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MCPPanel from '../src/panel';
 
+// Mock the vscode API globally
+const mockVscode = {
+  postMessage: jest.fn()
+};
+
+beforeAll(() => {
+  (global as any).acquireVsCodeApi = () => mockVscode;
+});
+
+afterAll(() => {
+  delete (global as any).acquireVsCodeApi;
+});
+
+beforeEach(() => {
+  mockVscode.postMessage.mockClear();
+});
+
 const mockServers = [
   { name: 'Server1', host: '127.0.0.1', port: 8080 },
   { name: 'Server2', host: '192.168.1.1', port: 9090 }
@@ -146,6 +163,71 @@ describe('MCP Panel UI', () => {
       // Command selection should be cleared
       const deployButton = screen.getByTestId('command-deploy');
       expect(deployButton).not.toHaveClass('selected');
+    });
+  });
+
+  describe('Execute Button', () => {
+    it('should render execute button', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      const executeButton = screen.getByTestId('execute-button');
+      expect(executeButton).toBeInTheDocument();
+      expect(executeButton).toHaveTextContent('Execute');
+    });
+
+    it('should be disabled when no command is selected', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      const executeButton = screen.getByTestId('execute-button');
+      expect(executeButton).toBeDisabled();
+    });
+
+    it('should be enabled when a command is selected', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      // Select a command
+      const statusButton = screen.getByTestId('command-status');
+      fireEvent.click(statusButton);
+      
+      const executeButton = screen.getByTestId('execute-button');
+      expect(executeButton).not.toBeDisabled();
+    });
+
+    it('should call postMessage when clicked with selected command', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      // Select a command
+      const statusButton = screen.getByTestId('command-status');
+      fireEvent.click(statusButton);
+      
+      // Click execute button
+      const executeButton = screen.getByTestId('execute-button');
+      fireEvent.click(executeButton);
+      
+      // Verify postMessage was called with correct data
+      expect(mockVscode.postMessage).toHaveBeenCalledWith({
+        type: 'executeCommand',
+        server: 'Server1',
+        command: 'status'
+      });
+    });
+
+    it('should be disabled after server changes (command cleared)', () => {
+      render(<MCPPanel servers={mockServers} commands={mockCommands} />);
+      
+      // Select a command from Server1
+      const statusButton = screen.getByTestId('command-status');
+      fireEvent.click(statusButton);
+      
+      const executeButton = screen.getByTestId('execute-button');
+      expect(executeButton).not.toBeDisabled();
+      
+      // Switch to Server2
+      const server2Button = screen.getByTestId('server-Server2');
+      fireEvent.click(server2Button);
+      
+      // Execute button should be disabled (command cleared)
+      expect(executeButton).toBeDisabled();
     });
   });
 });

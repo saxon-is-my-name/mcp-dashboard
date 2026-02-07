@@ -2,10 +2,13 @@ const path = require('path');
 
 module.exports = {
   mode: 'production',
-  entry: './src/webview.tsx',
+  entry: {
+    webview: './src/webview.tsx',
+    outputPanel: './src/outputPanelEntry.tsx'
+  },
   output: {
     path: path.resolve(__dirname, 'out'),
-    filename: 'webview.js',
+    filename: '[name].js',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],

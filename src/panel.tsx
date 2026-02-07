@@ -1,5 +1,10 @@
 import * as React from 'react';
 
+// Declare VS Code API type
+declare const acquireVsCodeApi: () => {
+	postMessage: (message: any) => void;
+};
+
 interface MCPServer {
 	name: string;
 	host: string;
@@ -19,10 +24,21 @@ interface MCPPanelProps {
 const MCPPanel: React.FC<MCPPanelProps> = ({ servers, commands }) => {
 	const [selectedServer, setSelectedServer] = React.useState<string>(servers[0]?.name || '');
 	const [selectedCommand, setSelectedCommand] = React.useState<string>('');
+	const vscode = React.useMemo(() => acquireVsCodeApi(), []);
 
 	const handleServerChange = (serverName: string) => {
 		setSelectedServer(serverName);
 		setSelectedCommand(''); // Clear command selection when server changes
+	};
+
+	const handleExecute = () => {
+		if (selectedCommand) {
+			vscode.postMessage({
+				type: 'executeCommand',
+				server: selectedServer,
+				command: selectedCommand
+			});
+		}
 	};
 
 	return (
@@ -53,6 +69,13 @@ const MCPPanel: React.FC<MCPPanelProps> = ({ servers, commands }) => {
 					</button>
 				))}
 			</div>
+			<button 
+				data-testid="execute-button"
+				disabled={!selectedCommand}
+				onClick={handleExecute}
+			>
+				Execute
+			</button>
 		</div>
 	);
 };
