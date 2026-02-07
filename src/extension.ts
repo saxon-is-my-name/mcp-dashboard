@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { MCPTool, ParsedMCPTool, GroupedMCPTools, ToolsUpdateMessage } from './types/mcpTool';
+import { ToolResult, ToolResultSuccess, ToolResultError } from './types/toolResult';
 
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
@@ -72,6 +73,110 @@ async function getGroupedTools(): Promise<GroupedMCPTools> {
 	return grouped;
 }
 
+/**
+ * Invoke an MCP tool using vscode.lm.invokeTool API
+ */
+async function invokeTool(toolName: string, parameters: any): Promise<ToolResult> {
+	const startTime = Date.now();
+	
+	try {
+		// Check if vscode.lm API is available
+		if (!vscode.lm || !vscode.lm.invokeTool) {
+			return {
+				success: false,
+				error: 'vscode.lm.invokeTool API not available',
+				toolName: toolName,
+				executionTime: Date.now() - startTime
+			};
+		}
+
+		// Find the tool to get its invocation options
+		const tools = vscode.lm.tools;
+		const tool = tools.find((t: any) => t.name === toolName);
+		
+		if (!tool) {
+			return {
+				success: false,
+				error: `Tool '${toolName}' not found`,
+				toolName: toolName,
+				executionTime: Date.now() - startTime
+			};
+		}
+
+		// Create invocation options
+		const options = {
+			toolInvocationToken: undefined, // Not in a chat context
+			input: parameters
+		};
+
+		// Invoke the tool with cancellation token
+		const cancellationToken = new vscode.CancellationTokenSource().token;
+		const result = await vscode.lm.invokeTool(toolName, options, cancellationToken);
+
+		// Parse the result
+		let data: any;
+		if (typeof result === 'object' && result !== null) {
+			data = result;
+		} else if (typeof result === 'string') {
+			try {
+				data = JSON.parse(result);
+			} catch {
+				data = result;
+			}
+		} else {
+			data = result;
+		}
+
+		return {
+			success: true,
+			data: data,
+			toolName: toolName,
+			executionTime: Date.now() - startTime
+		};
+	} catch (error) {
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : String(error),
+			toolName: toolName,
+			executionTime: Date.now() - startTime
+		};
+	}
+}
+
+/**
+ * Format a tool result for display
+ */
+function formatToolResult(result: ToolResult): string {
+	const lines: string[] = [];
+	
+	if (result.success) {
+		lines.push('✅ Tool execution successful');
+		lines.push('');
+		lines.push('Result:');
+		lines.push('---');
+		
+		// Format the data
+		if (typeof result.data === 'object' && result.data !== null) {
+			lines.push(JSON.stringify(result.data, null, 2));
+		} else {
+			lines.push(String(result.data));
+		}
+	} else {
+		lines.push('❌ Tool execution failed');
+		lines.push('');
+		lines.push('Error:');
+		lines.push('---');
+		lines.push(result.error);
+	}
+	
+	if (result.executionTime !== undefined) {
+		lines.push('');
+		lines.push(`Execution time: ${result.executionTime}ms`);
+	}
+	
+	return lines.join('\n');
+}
+
 class MCPViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
 
@@ -99,7 +204,11 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 			(message) => {
 				if (message.type === 'executeCommand') {
 					// Fire and forget - don't await
-					this._handleExecuteCommand(message.server, message.command);
+					this._handleExecuteCommand(
+						message.server, 
+						message.command,
+						message.parameters || {}
+					);
 				}
 			},
 			undefined,
@@ -125,7 +234,7 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	private async _handleExecuteCommand(server: string, command: string) {
+	private async _handleExecuteCommand(server: string, command: string, parameters: any = {}) {
 		// Create or show output panel
 		if (!outputPanel) {
 			outputPanel = vscode.window.createWebviewPanel(
@@ -160,8 +269,31 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 			command: command
 		});
 
-		// Simulate command execution with delay
-		await this._simulateCommandExecution(server, command);
+		// Execute the tool using real VS Code API
+		await this._executeToolWithRealAPI(server, command, parameters);
+	}
+
+	private async _executeToolWithRealAPI(server: string, command: string, parameters: any) {
+		// Reconstruct full tool name (server_command format)
+		const fullToolName = `${server}_${command}`;
+
+		// Invoke the tool
+		const result = await invokeTool(fullToolName, parameters);
+
+		// Format the result
+		const formattedOutput = formatToolResult(result);
+
+		// Send result to output panel
+		if (outputPanel) {
+			outputPanel.webview.postMessage({
+				type: 'result',
+				server: server,
+				command: command,
+				output: formattedOutput,
+				result: result,
+				timestamp: new Date().toLocaleString()
+			});
+		}
 	}
 
 	private async _simulateCommandExecution(server: string, command: string) {
@@ -342,7 +474,9 @@ export function activate(context: vscode.ExtensionContext) {
 	return {
 		getViewProvider: () => viewProvider,
 		getTools: getTools,
-		getGroupedTools: getGroupedTools
+		getGroupedTools: getGroupedTools,
+		invokeTool: invokeTool,
+		formatToolResult: formatToolResult
 	};
 }
 
