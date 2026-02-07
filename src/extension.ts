@@ -1,75 +1,39 @@
 import * as vscode from 'vscode';
 
-let currentPanel: vscode.WebviewPanel | undefined = undefined;
+class MCPViewProvider implements vscode.WebviewViewProvider {
+	constructor(private readonly _extensionUri: vscode.Uri) {}
 
-export function activate(context: vscode.ExtensionContext) {
-	const disposable = vscode.commands.registerCommand('mcp.showPanel', () => {
-		// If we already have a panel, show it
-		if (currentPanel) {
-			currentPanel.reveal(vscode.ViewColumn.One);
-			return;
-		}
+	public resolveWebviewView(
+		webviewView: vscode.WebviewView,
+		context: vscode.WebviewViewResolveContext,
+		_token: vscode.CancellationToken,
+	) {
+		webviewView.webview.options = {
+			enableScripts: true,
+			localResourceRoots: [this._extensionUri]
+		};
 
-		// Otherwise, create a new panel
-		currentPanel = vscode.window.createWebviewPanel(
-			'mcpPanel',
-			'MCP Dashboard',
-			vscode.ViewColumn.One,
-			{
-				enableScripts: true,
-				retainContextWhenHidden: true,
-			}
-		);
-
-		// Set the webview's initial html content
-		currentPanel.webview.html = getWebviewContent();
-
-		// Reset when the current panel is closed
-		currentPanel.onDidDispose(
-			() => {
-				currentPanel = undefined;
-			},
-			null,
-			context.subscriptions
-		);
-	});
-
-	context.subscriptions.push(disposable);
-
-	// Return API for testing
-	return {
-		getCurrentPanel
-	};
-}
-
-export function deactivate() {
-	if (currentPanel) {
-		currentPanel.dispose();
+		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 	}
-}
 
-export function getCurrentPanel(): vscode.WebviewPanel | undefined {
-	return currentPanel;
-}
+	private _getHtmlForWebview(webview: vscode.Webview) {
+		// Mock data for servers and commands
+		const servers = [
+			{ name: 'Server1', host: '127.0.0.1', port: 8080 },
+			{ name: 'Server2', host: '192.168.1.1', port: 9090 }
+		];
 
-function getWebviewContent(): string {
-	// Mock data for servers and commands
-	const servers = [
-		{ name: 'Server1', host: '127.0.0.1', port: 8080 },
-		{ name: 'Server2', host: '192.168.1.1', port: 9090 }
-	];
+		const commands = {
+			'Server1': [
+				{ name: 'status', description: 'Get status' },
+				{ name: 'restart', description: 'Restart server' }
+			],
+			'Server2': [
+				{ name: 'deploy', description: 'Deploy app' }
+			]
+		};
 
-	const commands = {
-		'Server1': [
-			{ name: 'status', description: 'Get status' },
-			{ name: 'restart', description: 'Restart server' }
-		],
-		'Server2': [
-			{ name: 'deploy', description: 'Deploy app' }
-		]
-	};
-
-	return `<!DOCTYPE html>
+		return `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -77,33 +41,62 @@ function getWebviewContent(): string {
 	<title>MCP Dashboard</title>
 	<style>
 		body {
-			padding: 20px;
+			padding: 10px;
 			color: var(--vscode-foreground);
-			background-color: var(--vscode-editor-background);
+			background-color: var(--vscode-sideBar-background);
+			font-size: var(--vscode-font-size);
+			font-family: var(--vscode-font-family);
+		}
+		h2 {
+			font-size: 13px;
+			font-weight: 600;
+			margin: 10px 0 5px 0;
+			text-transform: uppercase;
+			color: var(--vscode-foreground);
 		}
 		.server-list, .command-list {
-			margin-bottom: 20px;
+			margin-bottom: 15px;
 		}
 		button {
 			display: block;
-			margin: 5px 0;
-			padding: 10px;
-			background: var(--vscode-button-background);
-			color: var(--vscode-button-foreground);
-			border: none;
+			width: 100%;
+			margin: 2px 0;
+			padding: 6px 8px;
+			background: var(--vscode-sideBarSectionHeader-background);
+			color: var(--vscode-foreground);
+			border: 1px solid transparent;
 			cursor: pointer;
+			text-align: left;
+			border-radius: 2px;
+			font-size: 12px;
 		}
 		button:hover {
-			background: var(--vscode-button-hoverBackground);
+			background: var(--vscode-list-hoverBackground);
 		}
 		button.selected {
-			background: var(--vscode-button-secondaryBackground);
-			border: 2px solid var(--vscode-focusBorder);
+			background: var(--vscode-list-activeSelectionBackground);
+			color: var(--vscode-list-activeSelectionForeground);
+			border-color: var(--vscode-focusBorder);
+		}
+		.server-name {
+			font-weight: 500;
+		}
+		.server-address {
+			font-size: 11px;
+			opacity: 0.8;
+			margin-top: 2px;
+		}
+		.command-name {
+			font-weight: 500;
+		}
+		.command-description {
+			font-size: 11px;
+			opacity: 0.8;
+			margin-top: 2px;
 		}
 	</style>
 </head>
 <body>
-	<h1>MCP Dashboard</h1>
 	<div id="root"></div>
 	<script>
 		const servers = ${JSON.stringify(servers)};
@@ -122,8 +115,8 @@ function getWebviewContent(): string {
 							class="\${selectedServer === s.name ? 'selected' : ''}" 
 							onclick="selectServer('\${s.name}')"
 						>
-							<div>\${s.name}</div>
-							<div>\${s.host}:\${s.port}</div>
+							<div class="server-name">\${s.name}</div>
+							<div class="server-address">\${s.host}:\${s.port}</div>
 						</button>
 					\`).join('')}
 				</div>
@@ -134,8 +127,8 @@ function getWebviewContent(): string {
 							class="\${selectedCommand === c.name ? 'selected' : ''}"
 							onclick="selectCommand('\${c.name}')"
 						>
-							<div>\${c.name}</div>
-							<div>\${c.description}</div>
+							<div class="command-name">\${c.name}</div>
+							<div class="command-description">\${c.description}</div>
 						</button>
 					\`).join('') || '<p>No commands available</p>'}
 				</div>
@@ -157,5 +150,30 @@ function getWebviewContent(): string {
 	</script>
 </body>
 </html>`;
+	}
 }
 
+let viewProvider: MCPViewProvider;
+
+export function activate(context: vscode.ExtensionContext) {
+	// Create and register the webview view provider
+	viewProvider = new MCPViewProvider(context.extensionUri);
+	
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider('mcpView', viewProvider)
+	);
+
+	// Register command to focus the view
+	const disposable = vscode.commands.registerCommand('mcp.showView', () => {
+		vscode.commands.executeCommand('mcpView.focus');
+	});
+
+	context.subscriptions.push(disposable);
+
+	// Return API for testing
+	return {
+		getViewProvider: () => viewProvider
+	};
+}
+
+export function deactivate() {}

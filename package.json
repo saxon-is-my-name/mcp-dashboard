@@ -11,14 +11,32 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:mcp.showPanel"
+    "onView:mcpView"
   ],
   "main": "./out/src/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mcp-dashboard",
+          "title": "MCP Dashboard",
+          "icon": "$(server)"
+        }
+      ]
+    },
+    "views": {
+      "mcp-dashboard": [
+        {
+          "type": "webview",
+          "id": "mcpView",
+          "name": "Servers & Commands"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "mcp.showPanel",
-        "title": "Show MCP Panel"
+        "command": "mcp.showView",
+        "title": "Show MCP View"
       }
     ]
   },

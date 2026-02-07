@@ -1,9 +1,11 @@
 ## Plan: VS Code MCP Extension - Server/Command Model & UI
 
-This plan continues development of the VS Code MCP extension by implementing server and command models, enhancing the panel UI, and simulating command execution. Each phase follows strict TDD principles, starting with tests, then minimal code to pass those tests. Manual test steps will be documented in a Markdown file at the project root.
+This plan continues development of the VS Code MCP extension by implementing server and command models, enhancing the sidebar UI with React, and simulating command execution. Each phase follows strict TDD principles, starting with tests, then minimal code to pass those tests. Manual test steps will be documented in a Markdown file at the project root.
 
-**Phases 4**
-1. **Phase 1: Server and Command Model**
+**Progress:** Phase 1 complete. Currently working on Phase 2.
+
+**Phases 3**
+1. **Phase 1: Server and Command Model** ✅ COMPLETE
     - **Objective:** Implement data structures for MCP servers and commands, provide mock data, and write unit tests.
     - **Files/Functions to Modify/Create:**
         - src/panel.tsx (add model/data logic)
@@ -13,50 +15,54 @@ This plan continues development of the VS Code MCP extension by implementing ser
         - Should create MCP command objects
         - Should return mock data for servers/commands
     - **Steps:**
-        1. Write unit tests for server/command model and mock data
-        2. Implement data structures and mock data in panel.tsx
-        3. Run tests to confirm passing
+        1. ✅ Write unit tests for server/command model and mock data
+        2. ✅ Implement data structures and mock data in panel.tsx
+        3. ✅ Run tests to confirm passing
+    - **Status:** Complete. 3 data model tests passing. React component with full TypeScript interfaces implemented.
 
-2. **Phase 2: Panel UI - Server/Command List**
-    - **Objective:** Build React UI for server and command selection, connect to mock data, and write UI tests.
+2. **Phase 2: Integrate React UI into Webview View** 🔄 IN PROGRESS
+    - **Objective:** Bundle the React component and integrate it into the VS Code sidebar webview view.
     - **Files/Functions to Modify/Create:**
-        - src/panel.tsx (UI components)
-        - test/panel.test.ts (UI tests)
+        - webpack.config.js (create bundler config for React)
+        - src/webview.tsx (webview entry point)
+        - src/extension.ts (load bundled React in webview view)
+        - package.json (add build scripts)
     - **Tests to Write:**
-        - Should render server list
-        - Should render command list for selected server
-        - Should handle server/command selection events
+        - Integration tests for webview view React rendering
+        - Verify server/command lists display in sidebar
+        - Verify selection state persists
     - **Steps:**
-        1. Write UI tests for server/command list
-        2. Implement UI components and connect to mock data
-        3. Run tests to confirm passing
+        1. Set up webpack to bundle React component for webview
+        2. Create webview entry point that renders MCPPanel component
+        3. Update extension.ts to load bundled JavaScript
+        4. Write integration tests for webview rendering
+        5. Run tests to confirm passing
+    - **Notes:** 
+        - Sidebar webview view already registered (mcpView)
+        - MCPPanel React component already built with 11 passing UI tests
+        - Currently using vanilla JS placeholder - needs React integration
 
 3. **Phase 3: Command Execution and Output**
     - **Objective:** Simulate command execution, display output in the panel, and write tests for execution logic.
     - **Files/Functions to Modify/Create:**
         - src/panel.tsx (execution logic, output display)
-        - test/panel.test.ts (execution tests)
+        - test/panel.ui.test.tsx (execution tests)
     - **Tests to Write:**
         - Should simulate command execution
         - Should display command output
+        - Should show loading state during execution
     - **Steps:**
         1. Write tests for command execution/output
-        2. Implement simulation logic and output display
-        3. Run tests to confirm passing
-
-4. **Phase 4: Manual Test Documentation**
-    - **Objective:** Document manual test steps for UI and integration features in a Markdown file at the project root.
-    - **Files/Functions to Modify/Create:**
-        - MCP-manual-test-steps.md (new file)
-    - **Tests to Write:**
-        - N/A (documentation only)
-    - **Steps:**
-        1. Write manual test steps for UI and integration
-        2. Review and update as needed
+        2. Implement simulation logic and output display in React component
+        3. Add message passing between extension and webview
+        4. Run tests to confirm passing
 
 **Open Questions**
 1. All answered by user:
-    - Panel will contain model/data logic
-    - Command execution will be simulated for now
-    - Minimal custom CSS, rely on VS Code styling
-    - Manual test steps in a Markdown file at project root
+    - ✅ Panel will be a sidebar webview view (not editor panel)
+    - ✅ Panel will contain model/data logic
+    - ✅ Command execution will be simulated for now
+    - ✅ Use React component (requires bundling)
+    - ✅ Minimal custom CSS, rely on VS Code styling
+    - ✅ Manual test steps in a Markdown file at project root
+

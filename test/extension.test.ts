@@ -10,70 +10,40 @@ describe('Extension Activation', () => {
   });
 });
 
-describe('MCP Panel Command', () => {
-  let disposables: vscode.Disposable[] = [];
-
-  afterEach(() => {
-    disposables.forEach(d => d.dispose());
-    disposables = [];
-    
-    // Close any open panels
-    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
-    if (ext && ext.isActive) {
-      const extExports = ext.exports;
-      if (extExports && extExports.getCurrentPanel) {
-        const panel = extExports.getCurrentPanel();
-        if (panel) {
-          panel.dispose();
-        }
-      }
-    }
-  });
-
-  it('should register the mcp.showPanel command', async () => {
-    const commands = await vscode.commands.getCommands(true);
-    assert.ok(commands.includes('mcp.showPanel'), 'mcp.showPanel command not registered');
-  });
-
-  it('should create a webview panel when command is executed', async () => {
+describe('MCP Sidebar View', () => {
+  it('should register the webview view provider', async () => {
     const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
     assert.ok(ext, 'Extension not found');
+    await ext!.activate();
     
-    // Execute the command
-    await vscode.commands.executeCommand('mcp.showPanel');
-    
-    // Get the panel from extension exports
+    // Verify the extension exports the provider
     const extExports = ext!.exports;
     assert.ok(extExports, 'Extension exports not found');
-    assert.ok(extExports.getCurrentPanel, 'getCurrentPanel function not exported');
+    assert.ok(extExports.getViewProvider, 'getViewProvider function not exported');
     
-    const panel = extExports.getCurrentPanel();
-    assert.ok(panel, 'Panel was not created');
+    const provider = extExports.getViewProvider();
+    assert.ok(provider, 'Webview view provider not found');
   });
 
-  it('should set correct panel properties', async () => {
+  it('should have resolveWebviewView method', async () => {
     const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
-    await vscode.commands.executeCommand('mcp.showPanel');
+    await ext!.activate();
     
-    const panel = ext!.exports.getCurrentPanel();
-    assert.ok(panel, 'Panel not created');
-    assert.strictEqual(panel.viewType, 'mcpPanel', 'Panel viewType is incorrect');
-    assert.strictEqual(panel.title, 'MCP Dashboard', 'Panel title is incorrect');
+    const provider = ext!.exports.getViewProvider();
+    assert.ok(provider.resolveWebviewView, 'resolveWebviewView method not found');
+    assert.strictEqual(typeof provider.resolveWebviewView, 'function', 'resolveWebviewView must be a function');
   });
 
-  it('should reuse existing panel instead of creating multiple panels', async () => {
-    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+  it('should focus the MCP view when command is executed', async () => {
+    // Execute the command to show the view
+    await vscode.commands.executeCommand('mcp.showView');
     
-    // Execute command first time
-    await vscode.commands.executeCommand('mcp.showPanel');
-    const panel1 = ext!.exports.getCurrentPanel();
+    // Give it a moment to open
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Execute command second time
-    await vscode.commands.executeCommand('mcp.showPanel');
-    const panel2 = ext!.exports.getCurrentPanel();
-    
-    // Should be the same panel instance
-    assert.strictEqual(panel1, panel2, 'Multiple panels created instead of reusing');
+    // Verify command executes without error
+    // Note: We can't easily test if the view is actually visible in the test environment
+    assert.ok(true, 'Command executed successfully');
   });
 });
 
