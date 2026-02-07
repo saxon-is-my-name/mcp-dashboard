@@ -78,6 +78,7 @@ async function getGroupedTools(): Promise<GroupedMCPTools> {
  */
 async function invokeTool(toolName: string, parameters: any): Promise<ToolResult> {
 	const startTime = Date.now();
+	const tokenSource = new vscode.CancellationTokenSource();
 	
 	try {
 		// Check if vscode.lm API is available
@@ -110,8 +111,7 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 		};
 
 		// Invoke the tool with cancellation token
-		const cancellationToken = new vscode.CancellationTokenSource().token;
-		const result = await vscode.lm.invokeTool(toolName, options, cancellationToken);
+		const result = await vscode.lm.invokeTool(toolName, options, tokenSource.token);
 
 		// Parse the result
 		let data: any;
@@ -140,6 +140,8 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 			toolName: toolName,
 			executionTime: Date.now() - startTime
 		};
+	} finally {
+		tokenSource.dispose();
 	}
 }
 
