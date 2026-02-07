@@ -8,6 +8,8 @@ interface ParsedMCPTool {
 	description: string;
 	server: string;
 	fullName: string;
+	inputSchema?: any;
+	tags?: string[];
 }
 
 interface GroupedMCPTools {
@@ -53,11 +55,12 @@ const App: React.FC = () => {
 		port: 0
 	}));
 
-	const commands: { [serverName: string]: { name: string; description: string }[] } = {};
+	const commands: { [serverName: string]: { name: string; description: string; inputSchema?: any }[] } = {};
 	for (const [serverName, toolList] of Object.entries(tools)) {
 		commands[serverName] = toolList.map(tool => ({
 			name: tool.name,
-			description: tool.description
+			description: tool.description,
+			inputSchema: tool.inputSchema
 		}));
 	}
 

@@ -5,6 +5,9 @@ import { ToolResult, ToolResultSuccess, ToolResultError } from './types/toolResu
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
 
+// Store extension API for internal use and testing
+let extensionApi: any;
+
 /**
  * Fetch all available MCP tools from vscode.lm.tools
  */
@@ -279,8 +282,8 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 		// Reconstruct full tool name (server_command format)
 		const fullToolName = `${server}_${command}`;
 
-		// Invoke the tool
-		const result = await invokeTool(fullToolName, parameters);
+		// Invoke the tool (use extensionApi if available for testing, otherwise local function)
+		const result = await (extensionApi?.invokeTool || invokeTool)(fullToolName, parameters);
 
 		// Format the result
 		const formattedOutput = formatToolResult(result);
@@ -473,13 +476,15 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 
 	// Return API for testing
-	return {
+	extensionApi = {
 		getViewProvider: () => viewProvider,
 		getTools: getTools,
 		getGroupedTools: getGroupedTools,
 		invokeTool: invokeTool,
 		formatToolResult: formatToolResult
 	};
+	
+	return extensionApi;
 }
 
 export function deactivate() {}

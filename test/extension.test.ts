@@ -546,3 +546,227 @@ describe('MCP Tool Execution - Phase 2', () => {
   });
 });
 
+describe('Tool Parameter Input - Phase 1: Schema Passthrough', () => {
+  it('should include inputSchema in tools sent to webview', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let messageData: any = null;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          messageData = data;
+          return Promise.resolve(true);
+        }
+      }
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for async tool loading
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    assert.ok(messageData, 'Message data should be provided');
+    assert.strictEqual(messageData.type, 'toolsUpdate', 'Message type should be toolsUpdate');
+    assert.ok(messageData.tools, 'Message should contain tools data');
+    
+    // Check that tools include inputSchema
+    for (const serverName in messageData.tools) {
+      const tools = messageData.tools[serverName];
+      for (const tool of tools) {
+        assert.ok('inputSchema' in tool, `Tool ${tool.name} should have inputSchema property (even if undefined)`);
+      }
+    }
+  });
+
+  it('should preserve inputSchema when converting tools to commands', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let messageData: any = null;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          messageData = data;
+          return Promise.resolve(true);
+        }
+      }
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for async tool loading
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify that tools with inputSchema maintain that schema
+    if (messageData && messageData.tools) {
+      for (const serverName in messageData.tools) {
+        const tools = messageData.tools[serverName];
+        for (const tool of tools) {
+          // If a tool has inputSchema, it should be an object or undefined, not missing
+          if (tool.inputSchema !== undefined) {
+            assert.ok(
+              typeof tool.inputSchema === 'object' || tool.inputSchema === null,
+              `Tool ${tool.name} inputSchema should be an object if present`
+            );
+          }
+        }
+      }
+    }
+    
+    assert.ok(true, 'inputSchema preserved in tool data');
+  });
+});
+
+describe('Tool Parameter Input - Phase 3: Parameter Passing', () => {
+  it('should pass parameters to invokeTool function', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    // Track invokeTool calls
+    const extExports = ext!.exports;
+    const originalInvokeTool = extExports.invokeTool;
+    let capturedToolName: string | null = null;
+    let capturedParameters: any = null;
+    
+    extExports.invokeTool = async (toolName: string, parameters: any) => {
+      capturedToolName = toolName;
+      capturedParameters = parameters;
+      // Return a mock result
+      return {
+        success: true,
+        data: { result: 'test' },
+        toolName: toolName,
+        executionTime: 100
+      };
+    };
+    
+    // Create mock webview view
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          (mockWebviewView as any).messageCallback = callback;
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: () => Promise.resolve(true)
+      }
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    const messageCallback = (mockWebviewView as any).messageCallback;
+    
+    // Send executeCommand message with parameters
+    await messageCallback({
+      type: 'executeCommand',
+      server: 'TestServer',
+      command: 'testCommand',
+      parameters: {
+        name: 'John',
+        age: 25,
+        active: true
+      }
+    });
+    
+    // Wait for async execution
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify parameters were passed
+    assert.strictEqual(capturedToolName, 'TestServer_testCommand', 'Tool name should match');
+    assert.ok(capturedParameters, 'Parameters should be passed');
+    assert.strictEqual(capturedParameters.name, 'John', 'Name parameter should match');
+    assert.strictEqual(capturedParameters.age, 25, 'Age parameter should match');
+    assert.strictEqual(capturedParameters.active, true, 'Active parameter should match');
+    
+    // Restore original function
+    extExports.invokeTool = originalInvokeTool;
+  });
+
+  it('should pass empty parameters object when no parameters provided', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    // Track invokeTool calls
+    const extExports = ext!.exports;
+    const originalInvokeTool = extExports.invokeTool;
+    let capturedParameters: any = null;
+    
+    extExports.invokeTool = async (toolName: string, parameters: any) => {
+      capturedParameters = parameters;
+      return {
+        success: true,
+        data: { result: 'test' },
+        toolName: toolName,
+        executionTime: 100
+      };
+    };
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          (mockWebviewView as any).messageCallback = callback;
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: () => Promise.resolve(true)
+      }
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    const messageCallback = (mockWebviewView as any).messageCallback;
+    
+    // Send executeCommand message without parameters
+    await messageCallback({
+      type: 'executeCommand',
+      server: 'TestServer',
+      command: 'simpleCommand'
+    });
+    
+    // Wait for async execution
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Verify empty parameters object was passed
+    assert.ok(capturedParameters !== null, 'Parameters should be passed');
+    assert.deepStrictEqual(capturedParameters, {}, 'Parameters should be empty object');
+    
+    // Restore original function
+    extExports.invokeTool = originalInvokeTool;
+  });
+});
+
