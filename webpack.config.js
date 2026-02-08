@@ -3,7 +3,6 @@ const path = require('path');
 module.exports = {
   mode: 'production',
   entry: {
-    webview: './src/webview.tsx',
     outputPanel: './src/outputPanelEntry.tsx',
     toolDetail: './src/toolDetailEntry.tsx'
   },

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { MCPTool, ParsedMCPTool, GroupedMCPTools, ToolsUpdateMessage } from './types/mcpTool';
 import { ToolResult, ToolResultSuccess, ToolResultError } from './types/toolResult';
 import { WebviewToExtensionMessage } from './types/webviewMessages';
-import { getWebviewHtml } from './templates/webviewTemplate';
+
 import { getOutputPanelHtml } from './templates/outputPanelTemplate';
 import { ToolTreeProvider } from './providers/ToolTreeProvider';
 import { ToolDetailProvider } from './providers/ToolDetailProvider';
@@ -188,174 +188,6 @@ function formatToolResult(result: ToolResult): string {
 	return lines.join('\n');
 }
 
-class MCPViewProvider implements vscode.WebviewViewProvider {
-	private _view?: vscode.WebviewView;
-	private _cachedTools: GroupedMCPTools | null = null;
-
-	constructor(
-		private readonly _extensionUri: vscode.Uri,
-		private readonly _context: vscode.ExtensionContext
-	) {}
-
-	public resolveWebviewView(
-		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken,
-	) {
-		this._view = webviewView;
-		
-		webviewView.webview.options = {
-			enableScripts: true,
-			localResourceRoots: [this._extensionUri]
-		};
-
-		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-
-		// Register message handler with type-safe message handling
-		webviewView.webview.onDidReceiveMessage(
-			(message: WebviewToExtensionMessage) => {
-				switch (message.type) {
-					case 'executeCommand':
-						// Fire and forget - don't await
-						this._handleExecuteCommand(
-							message.server,
-							message.command,
-							message.parameters || {}
-						);
-						break;
-				}
-			},
-			undefined,
-			this._context.subscriptions
-		);
-
-		// Register visibility change listener
-		webviewView.onDidChangeVisibility(
-			() => {
-				// Only reload tools when webview becomes visible
-				if (webviewView.visible && this._view) {
-					// Send cached tools immediately if available
-					if (this._cachedTools) {
-						const message: ToolsUpdateMessage = {
-							type: 'toolsUpdate',
-							tools: this._cachedTools
-						};
-						this._view.webview.postMessage(message);
-					}
-					
-					// Then refresh tools asynchronously
-					this._loadAndSendTools();
-				}
-			},
-			undefined,
-			this._context.subscriptions
-		);
-
-		// Load and send tools to webview
-		this._loadAndSendTools();
-	}
-
-	private async _loadAndSendTools() {
-		try {
-			const groupedTools = await getGroupedTools();
-			
-			// Cache the tools
-			this._cachedTools = groupedTools;
-			
-			if (this._view) {
-				const message: ToolsUpdateMessage = {
-					type: 'toolsUpdate',
-					tools: groupedTools
-				};
-				this._view.webview.postMessage(message);
-			}
-		} catch (error) {
-			console.error('Error loading MCP tools:', error);
-		}
-	}
-
-	private async _handleExecuteCommand(server: string, command: string, parameters: any = {}) {
-		// Create or show output panel
-		if (!outputPanel) {
-			outputPanel = vscode.window.createWebviewPanel(
-				'mcpOutput',
-				'MCP Output',
-				vscode.ViewColumn.One,
-				{
-					enableScripts: true,
-					localResourceRoots: [this._extensionUri],
-					retainContextWhenHidden: true
-				}
-			);
-
-			outputPanel.webview.html = this._getOutputPanelHtml(outputPanel.webview);
-
-			// Clear reference when panel is disposed
-			outputPanel.onDidDispose(() => {
-				outputPanel = undefined;
-			});
-		} else {
-			// Reveal existing panel
-			outputPanel.reveal();
-		}
-
-		// Update panel title
-		outputPanel.title = `${server} › ${command}`;
-
-		// Send loading message
-		outputPanel.webview.postMessage({
-			type: 'loading',
-			server: server,
-			command: command
-		});
-
-		// Execute the tool using real VS Code API
-		await this._executeToolWithRealAPI(server, command, parameters);
-	}
-
-	private async _executeToolWithRealAPI(server: string, command: string, parameters: any) {
-		// Reconstruct full tool name (server_command format)
-		const fullToolName = `${server}_${command}`;
-
-		// Invoke the tool (use extensionApi if available for testing, otherwise local function)
-		const result = await (extensionApi?.invokeTool || invokeTool)(fullToolName, parameters);
-
-		// Format the result
-		const formattedOutput = formatToolResult(result);
-
-		// Send result to output panel
-		if (outputPanel) {
-			outputPanel.webview.postMessage({
-				type: 'result',
-				server: server,
-				command: command,
-				output: formattedOutput,
-				result: result,
-				timestamp: new Date().toLocaleString()
-			});
-		}
-	}
-
-	private _getHtmlForWebview(webview: vscode.Webview) {
-		// Get the URI for the bundled webview script
-		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'out', 'webview.js')
-		);
-
-		return getWebviewHtml(scriptUri.toString(), webview.cspSource);
-	}
-
-	private _getOutputPanelHtml(webview: vscode.Webview) {
-		// Get the URI for the bundled output panel script
-		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'out', 'outputPanel.js')
-		);
-
-		return getOutputPanelHtml(scriptUri.toString(), webview.cspSource);
-	}
-}
-
-let viewProvider: MCPViewProvider;
 let treeProvider: ToolTreeProvider;
 let detailProvider: ToolDetailProvider;
 let coordinationService: ToolCoordinationService;
@@ -390,23 +222,8 @@ export function activate(context: vscode.ExtensionContext) {
 		console.error('Error loading initial tools:', error);
 	});
 
-	// Create and register the webview view provider (keep for backward compatibility)
-	viewProvider = new MCPViewProvider(context.extensionUri, context);
-	
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider('mcpView', viewProvider)
-	);
-
-	// Register command to focus the view
-	const disposable = vscode.commands.registerCommand('mcp.showView', () => {
-		vscode.commands.executeCommand('mcpView.focus');
-	});
-
-	context.subscriptions.push(disposable);
-
 	// Return API for testing
 	extensionApi = {
-		getViewProvider: () => viewProvider,
 		getTreeProvider: () => treeProvider,
 		getDetailProvider: () => detailProvider,
 		getCoordinationService: () => coordinationService,

@@ -25,12 +25,6 @@
     "views": {
       "mcp-dashboard": [
         {
-          "type": "webview",
-          "id": "mcpView",
-          "name": "Servers & Commands",
-          "icon": "$(server)"
-        },
-        {
           "id": "mcpToolTree",
           "name": "Tools",
           "type": "tree"
@@ -43,10 +37,6 @@
       ]
     },
     "commands": [
-      {
-        "command": "mcp.showView",
-        "title": "Show MCP View"
-      },
       {
         "command": "mcp.selectTool",
         "title": "Select Tool"
