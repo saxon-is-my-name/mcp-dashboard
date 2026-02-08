@@ -64,6 +64,27 @@ describe('ToolDetailView', () => {
 		});
 	});
 
+	describe('error state', () => {
+		it('should show error message when error prop is provided', () => {
+			render(<ToolDetailView tool={undefined} loading={false} error="Failed to load tool details" />);
+			
+			expect(screen.getByText(/failed to load tool details/i)).toBeInTheDocument();
+		});
+
+		it('should not show execute button when error occurs', () => {
+			const mockTool: ParsedMCPTool = {
+				name: 'test_tool',
+				description: 'Test description',
+				server: 'test_server',
+				fullName: 'test_server_test_tool'
+			};
+
+			render(<ToolDetailView tool={mockTool} loading={false} error="Network error" />);
+			
+			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
+		});
+	});
+
 	describe('tool details rendering', () => {
 		const mockTool: ParsedMCPTool = {
 			name: 'test_tool',

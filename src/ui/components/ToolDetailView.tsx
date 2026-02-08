@@ -10,6 +10,7 @@ declare const acquireVsCodeApi: () => {
 interface ToolDetailViewProps {
 	tool?: ParsedMCPTool;
 	loading?: boolean;
+	error?: string;
 }
 
 interface ParameterInputsProps {
@@ -160,7 +161,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 	);
 };
 
-const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false }) => {
+const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, error }) => {
 	const [validationErrors, setValidationErrors] = React.useState<{ [key: string]: string }>({});
 	const vscode = React.useMemo(() => acquireVsCodeApi(), []);
 
@@ -295,6 +296,15 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false }
 		return (
 			<div className="loading-state">
 				Loading tool details...
+			</div>
+		);
+	}
+
+	// Show error state
+	if (error) {
+		return (
+			<div className="error-state">
+				{error}
 			</div>
 		);
 	}

@@ -2,6 +2,16 @@
 
 A VS Code extension for MCP (Model Context Protocol) dashboard integration.
 
+## Features
+
+The MCP Dashboard provides a comprehensive interface for browsing and executing MCP tools:
+
+- **TreeView Navigation**: Tools are organized by server in a collapsible tree view with intuitive icons. Servers are expandable to reveal their available tools.
+- **Detail Panel**: Select any tool from the tree to view its details, parameters, and description in a dedicated webview panel below.
+- **Persistent Selection**: Your selected tool is remembered across VS Code sessions, so you can pick up where you left off.
+- **Parameter Input**: Dynamic forms adapt to each tool's parameter schema, supporting strings, numbers, booleans, objects, arrays, and enums.
+- **Real-time Execution**: Execute tools directly from the detail panel with automatic parameter validation and result display.
+
 ## Development
 
 ### Prerequisites

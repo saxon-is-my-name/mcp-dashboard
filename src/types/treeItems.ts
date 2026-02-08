@@ -12,6 +12,7 @@ export class ServerTreeItem extends vscode.TreeItem {
 		super(label, collapsibleState);
 		this.iconPath = new vscode.ThemeIcon('server');
 		this.contextValue = 'server';
+		this.tooltip = label;
 	}
 }
 
@@ -27,7 +28,10 @@ export class ToolTreeItem extends vscode.TreeItem {
 		this.description = tool.description;
 		this.iconPath = new vscode.ThemeIcon('tools');
 		this.contextValue = 'tool';
-		this.tooltip = `${tool.name}\n${tool.description}`;
+		
+		// Set tooltip with tool name and description
+		const description = tool.description || 'No description';
+		this.tooltip = `${tool.name}\n${description}`;
 		
 		// Add command for tool selection
 		this.command = {

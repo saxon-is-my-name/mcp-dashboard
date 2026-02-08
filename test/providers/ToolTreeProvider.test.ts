@@ -184,6 +184,15 @@ describe('ToolTreeProvider', () => {
 			assert.ok(treeItem.iconPath instanceof vscode.ThemeIcon);
 			assert.strictEqual((treeItem.iconPath as vscode.ThemeIcon).id, 'server');
 		});
+
+		it('should have tooltip showing server name', async () => {
+			provider.refresh(mockTools);
+			const servers = await provider.getChildren();
+			const treeItem = provider.getTreeItem(servers[0]);
+			
+			assert.ok(treeItem.tooltip);
+			assert.strictEqual(treeItem.tooltip, servers[0].label);
+		});
 	});
 
 	describe('Tool nodes', () => {
@@ -206,6 +215,39 @@ describe('ToolTreeProvider', () => {
 			
 			assert.ok(treeItem.iconPath instanceof vscode.ThemeIcon);
 			assert.strictEqual((treeItem.iconPath as vscode.ThemeIcon).id, 'tools');
+		});
+
+		it('should have tooltip showing tool description', async () => {
+			provider.refresh(mockTools);
+			const servers = await provider.getChildren();
+			const tools = await provider.getChildren(servers[0]);
+			const treeItem = provider.getTreeItem(tools[0]);
+			
+			assert.ok(treeItem.tooltip);
+			assert.ok((treeItem.tooltip as string).includes('tool1'));
+			assert.ok((treeItem.tooltip as string).includes('Tool 1 description'));
+		});
+
+		it('should have tooltip with "No description" when description is empty', async () => {
+			const toolsWithoutDesc: GroupedMCPTools = {
+				'server1': [
+					{
+						name: 'tool_no_desc',
+						description: '',
+						server: 'server1',
+						fullName: 'server1_tool_no_desc',
+						inputSchema: {}
+					}
+				]
+			};
+			
+			provider.refresh(toolsWithoutDesc);
+			const servers = await provider.getChildren();
+			const tools = await provider.getChildren(servers[0]);
+			const treeItem = provider.getTreeItem(tools[0]);
+			
+			assert.ok(treeItem.tooltip);
+			assert.ok((treeItem.tooltip as string).includes('No description'));
 		});
 
 		it('should contain correct command for selection', async () => {
