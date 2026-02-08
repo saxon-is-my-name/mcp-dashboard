@@ -1112,3 +1112,111 @@ describe('Panel Visibility and Reload', () => {
   });
 });
 
+describe('Bidirectional Tool Request Mechanism - Phase 2', () => {
+  it('should handle requestTools message and respond with tools', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let messageCallback: any = null;
+    let postMessageCalls: any[] = [];
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          messageCallback = callback;
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          postMessageCalls.push(data);
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const initialCallCount = postMessageCalls.length;
+    
+    // Send requestTools message
+    assert.ok(messageCallback, 'Message callback should be registered');
+    await messageCallback({ type: 'requestTools' });
+    
+    // Wait for async tool loading
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Should have sent tools in response
+    assert.ok(postMessageCalls.length > initialCallCount, 'Should send tools in response to requestTools');
+    
+    const lastMessage = postMessageCalls[postMessageCalls.length - 1];
+    assert.strictEqual(lastMessage.type, 'toolsUpdate', 'Response should be toolsUpdate message');
+    assert.ok(lastMessage.tools, 'Response should contain tools data');
+  });
+
+  it('should handle multiple requestTools messages gracefully', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let messageCallback: any = null;
+    let postMessageCallCount = 0;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: (callback: any) => {
+          messageCallback = callback;
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          if (data.type === 'toolsUpdate') {
+            postMessageCallCount++;
+          }
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const initialCallCount = postMessageCallCount;
+    
+    // Send multiple requestTools messages in quick succession
+    assert.ok(messageCallback, 'Message callback should be registered');
+    await messageCallback({ type: 'requestTools' });
+    await messageCallback({ type: 'requestTools' });
+    await messageCallback({ type: 'requestTools' });
+    
+    // Wait for async tool loading
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    // Should handle all requests without crashing
+    assert.ok(postMessageCallCount >= initialCallCount + 1, 'Should handle multiple requestTools messages');
+  });
+});
+

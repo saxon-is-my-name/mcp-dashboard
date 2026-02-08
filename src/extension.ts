@@ -215,6 +215,9 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 						message.command,
 						message.parameters || {}
 					);
+				} else if (message.type === 'requestTools') {
+					// Handle tool request from webview (fallback mechanism)
+					this._loadAndSendTools();
 				}
 			},
 			undefined,
