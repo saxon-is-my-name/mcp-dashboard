@@ -1,15 +1,33 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { ToolTreeProvider } from '../../src/providers/ToolTreeProvider';
+import { ToolCoordinationService } from '../../src/services/ToolCoordinationService';
 import { GroupedMCPTools, ParsedMCPTool } from '../../src/types/mcpTool';
 import { ServerTreeItem, ToolTreeItem } from '../../src/types/treeItems';
 
 describe('ToolTreeProvider', () => {
 	let provider: ToolTreeProvider;
+	let coordinationService: ToolCoordinationService;
+	let mockContext: vscode.ExtensionContext;
+	let workspaceState: Map<string, any>;
 	let mockTools: GroupedMCPTools;
 
 	beforeEach(() => {
-		provider = new ToolTreeProvider();
+		// Create mock workspace state
+		workspaceState = new Map<string, any>();
+		
+		mockContext = {
+			workspaceState: {
+				get: (key: string) => workspaceState.get(key),
+				update: async (key: string, value: any) => {
+					workspaceState.set(key, value);
+				}
+			},
+			subscriptions: []
+		} as any;
+
+		coordinationService = new ToolCoordinationService(mockContext);
+		provider = new ToolTreeProvider(coordinationService);
 		
 		// Setup mock tools data
 		mockTools = {
@@ -39,6 +57,16 @@ describe('ToolTreeProvider', () => {
 				}
 			]
 		};
+	});
+
+	afterEach(() => {
+		// Dispose provider to clean up command registration
+		if (provider) {
+			provider.dispose();
+		}
+		if (coordinationService) {
+			coordinationService.dispose();
+		}
 	});
 
 	describe('getTreeItem', () => {

@@ -4,6 +4,7 @@ import { WebviewToExtensionMessage } from '../types/webviewMessages';
 import { ToolResult } from '../types/toolResult';
 import { getToolDetailHtml } from '../templates/toolDetailTemplate';
 import { getOutputPanelHtml } from '../templates/outputPanelTemplate';
+import { ToolCoordinationService } from '../services/ToolCoordinationService';
 
 /**
  * Invoke an MCP tool using vscode.lm.invokeTool API
@@ -114,14 +115,32 @@ function formatToolResult(result: ToolResult): string {
 /**
  * WebviewViewProvider for displaying tool details
  */
-export class ToolDetailProvider implements vscode.WebviewViewProvider {
+export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Disposable {
 	private _view?: vscode.WebviewView;
 	private _outputPanel?: vscode.WebviewPanel;
+	private _selectionSubscription: vscode.Disposable;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
-		private readonly _context: vscode.ExtensionContext
-	) {}
+		private readonly _context: vscode.ExtensionContext,
+		private readonly _coordinationService: ToolCoordinationService
+	) {
+		// Subscribe to selection changes from coordination service
+		this._selectionSubscription = this._coordinationService.onSelectionChanged((tool) => {
+			this.showToolDetail(tool);
+		});
+	}
+
+	/**
+	 * Dispose of resources and clean up subscriptions
+	 */
+	dispose(): void {
+		this._selectionSubscription.dispose();
+		if (this._outputPanel) {
+			this._outputPanel.dispose();
+			this._outputPanel = undefined;
+		}
+	}
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
