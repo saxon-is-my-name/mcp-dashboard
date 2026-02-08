@@ -17,7 +17,7 @@ const OutputPanel: React.FC = () => {
 		// Listen for messages from the extension
 		const messageHandler = (event: MessageEvent) => {
 			const message = event.data;
-			
+
 			if (message.type === 'loading') {
 				setState({
 					type: 'loading',
@@ -37,7 +37,7 @@ const OutputPanel: React.FC = () => {
 		};
 
 		window.addEventListener('message', messageHandler);
-		
+
 		return () => {
 			window.removeEventListener('message', messageHandler);
 		};

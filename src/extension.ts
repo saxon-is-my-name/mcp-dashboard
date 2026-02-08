@@ -43,6 +43,7 @@ async function getTools(): Promise<MCPTool[]> {
 /**
  * Parse a tool name to extract server and tool name
  * Tool names from vscode.lm.tools follow the pattern "serverName_toolName"
+ * TODO: Try and guess server name if it contains a TLD e.g "mcp_com_atlassian_toolName" -> server: "mcp.com.atlassian", toolName: "toolName"
  */
 function parseTool(tool: MCPTool): ParsedMCPTool {
 	const parts = tool.name.split('_');

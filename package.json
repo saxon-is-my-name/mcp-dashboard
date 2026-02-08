@@ -50,8 +50,7 @@
     "build:webview": "webpack --mode production",
     "watch:webview": "webpack --mode development --watch",
     "test": "npm run compile && xvfb-run -a --server-args='-screen 0 1280x1024x24' node ./test/suite/index.js",
-    "test:ui": "jest",
-    "unit-test": "npm run compile && mocha -r ts-node/register test/unit/**/*.test.ts"
+    "test:ui": "jest"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.0",
