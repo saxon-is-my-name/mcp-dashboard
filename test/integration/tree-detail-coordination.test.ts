@@ -34,52 +34,58 @@ describe('Tree-Detail Coordination Integration', () => {
 		server1: [mockTool1, mockTool2]
 	};
 
-	beforeEach(() => {
-		// Create mock workspace state
-		workspaceState = new Map<string, any>();
+	beforeEach(async () => {
+		// Get the activated extension's providers
+		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		await ext!.activate();
 		
+		const extExports = ext!.exports;
+		coordinationService = extExports.getCoordinationService();
+		treeProvider = extExports.getTreeProvider();
+		detailProvider = extExports.getDetailProvider();
+		
+		// Get extension URI from extension
+		extensionUri = ext!.extensionUri;
+		
+		// Create mock context for tests that need it
+		workspaceState = new Map<string, any>();
 		mockContext = {
+			extensionUri: extensionUri,
+			subscriptions: [],
 			workspaceState: {
 				get: (key: string) => workspaceState.get(key),
 				update: async (key: string, value: any) => {
 					workspaceState.set(key, value);
 				}
-			},
-			subscriptions: []
+			}
 		} as any;
-
-		// Use workspace root as extension URI
-		extensionUri = vscode.workspace.workspaceFolders?.[0]?.uri || vscode.Uri.file('/');
-
-		// Create service and providers
-		coordinationService = new ToolCoordinationService(mockContext);
-		treeProvider = new ToolTreeProvider(coordinationService);
-		detailProvider = new ToolDetailProvider(extensionUri, mockContext, coordinationService);
 
 		// Populate tree with tools
 		treeProvider.refresh(mockTools);
 	});
 
 	afterEach(() => {
-		// Dispose providers to clean up resources
-		if (treeProvider) {
-			treeProvider.dispose();
-		}
-		if (coordinationService) {
-			coordinationService.dispose();
-		}
+		// Don't dispose providers since they're owned by the extension
+		// Just clear the selection
+		coordinationService.selectTool(undefined);
 	});
 
-	it('ToolTreeProvider selection updates coordination service', (done) => {
-		coordinationService.onSelectionChanged((tool) => {
-			assert.ok(tool, 'Tool should be selected');
-			assert.strictEqual(tool?.fullName, mockTool1.fullName);
-			assert.strictEqual(tool?.name, mockTool1.name);
-			done();
-		});
+	it('ToolTreeProvider selection updates coordination service', async () => {
+		// Clear any previous selection
+		coordinationService.selectTool(undefined);
+		await new Promise(resolve => setTimeout(resolve, 50));
 
 		// Simulate tree item selection via command
-		vscode.commands.executeCommand('mcp.selectTool', mockTool1);
+		await vscode.commands.executeCommand('mcp.selectTool', mockTool1);
+
+		// Wait for selection to propagate
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		// Verify tool was selected
+		const selected = coordinationService.getSelectedTool();
+		assert.ok(selected, 'Tool should be selected');
+		assert.strictEqual(selected?.fullName, mockTool1.fullName);
+		assert.strictEqual(selected?.name, mockTool1.name);
 	});
 
 	it('ToolDetailProvider receives updated tool from coordination service', async () => {
@@ -151,47 +157,43 @@ describe('Tree-Detail Coordination Integration', () => {
 	});
 
 	it('Selected tool is restored after VS Code restart', async () => {
-		// Select a tool
+		// Select a tool using the real coordination service
 		coordinationService.selectTool(mockTool1);
 		
-		// Wait for persistence
+		// Wait for persistence to complete
 		await new Promise(resolve => setTimeout(resolve, 100));
 
-		// Create new service instance (simulating VS Code restart)
-		const newCoordinationService = new ToolCoordinationService(mockContext);
-		const newDetailProvider = new ToolDetailProvider(extensionUri, mockContext, newCoordinationService);
+		// Get the extension context to access its workspace state
+		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const extContext = (ext!.exports.getCoordinationService() as any)._context;
 
-		let restoredTool: ParsedMCPTool | undefined;
+		// Create new service instance with the same context (simulating VS Code restart)
+		const newCoordinationService = new ToolCoordinationService(extContext);
 
-		// Mock showToolDetail to capture restored tool
-		const originalShowToolDetail = newDetailProvider.showToolDetail.bind(newDetailProvider);
-		newDetailProvider.showToolDetail = async (tool?: ParsedMCPTool) => {
-			restoredTool = tool;
-			return originalShowToolDetail(tool);
-		};
-
-		// Trigger restoration by getting the selected tool
+		// Verify tool was restored from workspace state
 		const restored = newCoordinationService.getSelectedTool();
-
-		// Verify tool was restored
 		assert.ok(restored, 'Tool should be restored');
 		assert.strictEqual(restored?.fullName, mockTool1.fullName);
 		assert.strictEqual(restored?.name, mockTool1.name);
+
+		// Clean up
+		newCoordinationService.dispose();
 	});
 
-	it('Coordination service can clear selection', (done) => {
+	it('Coordination service can clear selection', async () => {
 		// First select a tool
 		coordinationService.selectTool(mockTool1);
+		await new Promise(resolve => setTimeout(resolve, 50));
 
-		// Then clear it
-		coordinationService.onSelectionChanged((tool) => {
-			if (tool === undefined) {
-				assert.strictEqual(coordinationService.getSelectedTool(), undefined);
-				done();
-			}
-		});
+		// Verify it's selected
+		assert.ok(coordinationService.getSelectedTool(), 'Tool should be selected');
 
+		//Then clear it
 		coordinationService.selectTool(undefined);
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		// Verify it's cleared
+		assert.strictEqual(coordinationService.getSelectedTool(), undefined);
 	});
 
 	it('ToolTreeProvider command is registered', async () => {

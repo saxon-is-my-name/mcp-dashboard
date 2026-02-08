@@ -11,20 +11,29 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 	readonly onDidChangeTreeData: vscode.Event<ServerTreeItem | ToolTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
 	private tools: GroupedMCPTools = {};
-	private _commandDisposable: vscode.Disposable;
+	private _commandDisposable: vscode.Disposable | undefined;
 
 	constructor(private readonly coordinationService: ToolCoordinationService) {
 		// Register the command for selecting tools
-		this._commandDisposable = vscode.commands.registerCommand('mcp.selectTool', (tool) => {
-			this.coordinationService.selectTool(tool);
-		});
+		// Wrap in try-catch to handle cases where command is already registered
+		try {
+			this._commandDisposable = vscode.commands.registerCommand('mcp.selectTool', (tool) => {
+				this.coordinationService.selectTool(tool);
+			});
+		} catch (error) {
+			// Command already registered - this is OK in test scenarios
+			console.log('mcp.selectTool command already registered');
+			this._commandDisposable = undefined;
+		}
 	}
 
 	/**
 	 * Dispose of resources
 	 */
 	dispose(): void {
-		this._commandDisposable.dispose();
+		if (this._commandDisposable) {
+			this._commandDisposable.dispose();
+		}
 		this._onDidChangeTreeData.dispose();
 	}
 

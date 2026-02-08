@@ -4,6 +4,9 @@ import { ToolResult, ToolResultSuccess, ToolResultError } from './types/toolResu
 import { WebviewToExtensionMessage } from './types/webviewMessages';
 import { getWebviewHtml } from './templates/webviewTemplate';
 import { getOutputPanelHtml } from './templates/outputPanelTemplate';
+import { ToolTreeProvider } from './providers/ToolTreeProvider';
+import { ToolDetailProvider } from './providers/ToolDetailProvider';
+import { ToolCoordinationService } from './services/ToolCoordinationService';
 
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
@@ -353,9 +356,41 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 }
 
 let viewProvider: MCPViewProvider;
+let treeProvider: ToolTreeProvider;
+let detailProvider: ToolDetailProvider;
+let coordinationService: ToolCoordinationService;
 
 export function activate(context: vscode.ExtensionContext) {
-	// Create and register the webview view provider
+	// Create coordination service
+	coordinationService = new ToolCoordinationService(context);
+	context.subscriptions.push(coordinationService);
+
+	// Create tree provider
+	treeProvider = new ToolTreeProvider(coordinationService);
+	context.subscriptions.push(treeProvider);
+	
+	// Register tree view
+	context.subscriptions.push(
+		vscode.window.registerTreeDataProvider('mcpToolTree', treeProvider)
+	);
+
+	// Create detail provider
+	detailProvider = new ToolDetailProvider(context.extensionUri, context, coordinationService);
+	context.subscriptions.push(detailProvider);
+	
+	// Register detail webview
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider('mcpToolDetail', detailProvider)
+	);
+
+	// Fetch and refresh tree with tools
+	getGroupedTools().then(tools => {
+		treeProvider.refresh(tools);
+	}).catch(error => {
+		console.error('Error loading initial tools:', error);
+	});
+
+	// Create and register the webview view provider (keep for backward compatibility)
 	viewProvider = new MCPViewProvider(context.extensionUri, context);
 	
 	context.subscriptions.push(
@@ -372,6 +407,9 @@ export function activate(context: vscode.ExtensionContext) {
 	// Return API for testing
 	extensionApi = {
 		getViewProvider: () => viewProvider,
+		getTreeProvider: () => treeProvider,
+		getDetailProvider: () => detailProvider,
+		getCoordinationService: () => coordinationService,
 		getTools: getTools,
 		getGroupedTools: getGroupedTools,
 		invokeTool: invokeTool,

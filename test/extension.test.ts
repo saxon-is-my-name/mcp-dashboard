@@ -1111,3 +1111,98 @@ describe('Panel Visibility and Reload', () => {
     assert.ok(postMessageCallCount >= initialCallCount + 1, 'Tools should be refreshed after sending cached data');
   });
 });
+
+describe('Phase 4: TreeView and Detail Provider Registration', () => {
+  it('should register tree view provider', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    assert.ok(ext, 'Extension not found');
+    await ext!.activate();
+    
+    // Verify the extension exports the tree provider
+    const extExports = ext!.exports;
+    assert.ok(extExports, 'Extension exports not found');
+    assert.ok(extExports.getTreeProvider, 'getTreeProvider function not exported');
+    
+    const treeProvider = extExports.getTreeProvider();
+    assert.ok(treeProvider, 'Tree provider not found');
+  });
+
+  it('should register detail webview provider', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const extExports = ext!.exports;
+    assert.ok(extExports.getDetailProvider, 'getDetailProvider function not exported');
+    
+    const detailProvider = extExports.getDetailProvider();
+    assert.ok(detailProvider, 'Detail provider not found');
+  });
+
+  it('should create coordination service singleton', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const extExports = ext!.exports;
+    assert.ok(extExports.getCoordinationService, 'getCoordinationService function not exported');
+    
+    const coordinationService = extExports.getCoordinationService();
+    assert.ok(coordinationService, 'Coordination service not found');
+  });
+
+  it('should have refresh method on tree provider', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const treeProvider = ext!.exports.getTreeProvider();
+    assert.ok(treeProvider.refresh, 'refresh method not found');
+    assert.strictEqual(typeof treeProvider.refresh, 'function', 'refresh must be a function');
+  });
+
+  it('should have resolveWebviewView method on detail provider', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const detailProvider = ext!.exports.getDetailProvider();
+    assert.ok(detailProvider.resolveWebviewView, 'resolveWebviewView method not found');
+    assert.strictEqual(typeof detailProvider.resolveWebviewView, 'function', 'resolveWebviewView must be a function');
+  });
+
+  it('should initially load and refresh tree with tools', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const treeProvider = ext!.exports.getTreeProvider();
+    
+    // Wait a bit for async tool refresh
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Try to get children (should work even if no tools available)
+    const children = await treeProvider.getChildren();
+    assert.ok(Array.isArray(children), 'getChildren should return array');
+  });
+
+  it('should register mcp.selectTool command', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    // Try to execute the command - should not throw
+    try {
+      await vscode.commands.executeCommand('mcp.selectTool', undefined);
+      assert.ok(true, 'Command executed without error');
+    } catch (error) {
+      assert.fail('Command should be registered');
+    }
+  });
+
+  it('should coordination service be shared between providers', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const coordinationService = ext!.exports.getCoordinationService();
+    
+    // Verify it has expected methods
+    assert.ok(coordinationService.selectTool, 'selectTool method not found');
+    assert.ok(coordinationService.getSelectedTool, 'getSelectedTool method not found');
+    assert.ok(coordinationService.onSelectionChanged, 'onSelectionChanged event not found');
+  });
+});
