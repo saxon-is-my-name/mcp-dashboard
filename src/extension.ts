@@ -4,6 +4,7 @@ import { ToolResult, ToolResultSuccess, ToolResultError } from './types/toolResu
 import { WebviewToExtensionMessage } from './types/webviewMessages';
 import { getWebviewHtml } from './templates/webviewTemplate';
 import { getOutputPanelHtml } from './templates/outputPanelTemplate';
+import { assertNever } from './utilities';
 
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
@@ -224,6 +225,10 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 						// Handle tool request from webview (fallback mechanism)
 						this._loadAndSendTools();
 						break;
+					default:
+						// Exhaustiveness check: if we add a new message type and forget
+						// to handle it, TypeScript will error here at compile time
+						assertNever(message);
 				}
 			},
 			undefined,
