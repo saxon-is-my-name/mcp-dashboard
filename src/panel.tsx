@@ -372,7 +372,7 @@ const MCPPanel: React.FC<MCPPanelProps> = ({ servers, commands }) => {
 				disabled={!selectedCommand}
 				onClick={handleExecute}
 			>
-				Execute
+				Execute!
 			</button>
 		</div>
 	);
