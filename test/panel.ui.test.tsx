@@ -718,47 +718,4 @@ describe('MCP Panel UI', () => {
       expect(screen.queryByText(/name is required/i)).not.toBeInTheDocument();
     });
   });
-
-  describe('Bidirectional Tool Request - Phase 2', () => {
-    it('should send requestTools message when webview mounts', () => {
-      // Import and render the App component from webview.tsx
-      // Note: This is testing the webview integration, not just MCPPanel
-      
-      // The test verifies that when the webview/app mounts,
-      // it sends a requestTools message to the extension
-      // This will be implemented once we add the useEffect in webview.tsx
-      
-      // For now, verify that the vscode API is available
-      expect(mockVscode.postMessage).toBeDefined();
-      
-      // In the actual implementation, the App component will call:
-      // vscode.postMessage({type: 'requestTools'}) on mount
-      
-      // Mock rendering and check for requestTools message
-      // This test will pass once webview.tsx is updated
-      const expectedCall = { type: 'requestTools' };
-      
-      // Simulate what should happen when App mounts
-      mockVscode.postMessage(expectedCall);
-      
-      // Verify the message was sent
-      expect(mockVscode.postMessage).toHaveBeenCalledWith(expectedCall);
-    });
-
-    it('should handle requestTools being called multiple times without errors', () => {
-      // This test verifies that multiple requestTools calls don't cause issues
-      // This could happen if the webview is unmounted and remounted
-      
-      mockVscode.postMessage.mockClear();
-      
-      // Simulate multiple mount/remount cycles
-      mockVscode.postMessage({ type: 'requestTools' });
-      mockVscode.postMessage({ type: 'requestTools' });
-      mockVscode.postMessage({ type: 'requestTools' });
-      
-      // All calls should succeed
-      expect(mockVscode.postMessage).toHaveBeenCalledTimes(3);
-      expect(mockVscode.postMessage).toHaveBeenCalledWith({ type: 'requestTools' });
-    });
-  });
 });

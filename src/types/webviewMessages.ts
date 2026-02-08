@@ -2,8 +2,7 @@
  * Messages sent from webview to extension
  */
 export type WebviewToExtensionMessage = 
-	| { type: 'executeCommand'; server: string; command: string; parameters?: any }
-	| { type: 'requestTools' };
+	| { type: 'executeCommand'; server: string; command: string; parameters?: any };
 
 /**
  * Messages sent from extension to webview
