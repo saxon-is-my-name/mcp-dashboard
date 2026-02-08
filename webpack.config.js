@@ -4,7 +4,8 @@ module.exports = {
   mode: 'production',
   entry: {
     webview: './src/webview.tsx',
-    outputPanel: './src/outputPanelEntry.tsx'
+    outputPanel: './src/outputPanelEntry.tsx',
+    toolDetail: './src/toolDetailEntry.tsx'
   },
   output: {
     path: path.resolve(__dirname, 'out'),

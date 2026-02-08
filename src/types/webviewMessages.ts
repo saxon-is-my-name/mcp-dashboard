@@ -1,3 +1,5 @@
+import { ParsedMCPTool } from './mcpTool';
+
 /**
  * Messages sent from webview to extension
  */
@@ -9,4 +11,5 @@ export type WebviewToExtensionMessage =
  */
 export type ExtensionToWebviewMessage = 
 	| { type: 'toolsUpdate'; tools: any }
-	| { type: 'error'; message: string };
+	| { type: 'error'; message: string }
+	| { type: 'toolDetailUpdate'; tool?: ParsedMCPTool; loading?: boolean };
