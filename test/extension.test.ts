@@ -139,6 +139,9 @@ describe('Message Handling and Output Panel', () => {
           return vscode.Uri.parse('vscode-webview://test' + uri.path);
         },
         postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -212,6 +215,9 @@ describe('Message Handling and Output Panel', () => {
           return vscode.Uri.parse('vscode-webview://test' + uri.path);
         },
         postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -304,6 +310,9 @@ describe('MCP Tool Discovery - Phase 1', () => {
           messageData = data;
           return Promise.resolve(true);
         }
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -463,6 +472,9 @@ describe('MCP Tool Execution - Phase 2', () => {
           return vscode.Uri.parse('vscode-webview://test' + uri.path);
         },
         postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -503,6 +515,9 @@ describe('MCP Tool Execution - Phase 2', () => {
           return vscode.Uri.parse('vscode-webview://test' + uri.path);
         },
         postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -569,6 +584,9 @@ describe('Tool Parameter Input - Phase 1: Schema Passthrough', () => {
           messageData = data;
           return Promise.resolve(true);
         }
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -612,6 +630,9 @@ describe('Tool Parameter Input - Phase 1: Schema Passthrough', () => {
           messageData = data;
           return Promise.resolve(true);
         }
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -678,6 +699,9 @@ describe('Tool Parameter Input - Phase 3: Parameter Passing', () => {
           return vscode.Uri.parse('vscode-webview://test' + uri.path);
         },
         postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -744,6 +768,9 @@ describe('Tool Parameter Input - Phase 3: Parameter Passing', () => {
           return vscode.Uri.parse('vscode-webview://test' + uri.path);
         },
         postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: () => {
+        return { dispose: () => {} };
       }
     } as any;
 
@@ -767,6 +794,321 @@ describe('Tool Parameter Input - Phase 3: Parameter Passing', () => {
     
     // Restore original function
     extExports.invokeTool = originalInvokeTool;
+  });
+});
+
+describe('Panel Visibility and Reload', () => {
+  it('should register onDidChangeVisibility listener during resolve', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let visibilityListenerRegistered = false;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: () => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: () => Promise.resolve(true)
+      },
+      onDidChangeVisibility: (callback: any) => {
+        visibilityListenerRegistered = true;
+        return { dispose: () => {} };
+      }
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    assert.ok(visibilityListenerRegistered, 'onDidChangeVisibility listener should be registered');
+  });
+
+  it('should re-send tools when webview becomes visible after being hidden', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let visibilityCallback: any = null;
+    let postMessageCallCount = 0;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: () => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          if (data.type === 'toolsUpdate') {
+            postMessageCallCount++;
+          }
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: (callback: any) => {
+        visibilityCallback = callback;
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial tool load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const initialCallCount = postMessageCallCount;
+    
+    // Simulate webview becoming hidden
+    mockWebviewView.visible = false;
+    if (visibilityCallback) {
+      visibilityCallback();
+    }
+    
+    // Simulate webview becoming visible again
+    mockWebviewView.visible = true;
+    if (visibilityCallback) {
+      visibilityCallback();
+    }
+    
+    // Wait for async operations
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    assert.ok(postMessageCallCount > initialCallCount, 'Tools should be re-sent when webview becomes visible');
+  });
+
+  it('should not send tools when webview becomes invisible', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let visibilityCallback: any = null;
+    let postMessageCallCount = 0;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: () => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          if (data.type === 'toolsUpdate') {
+            postMessageCallCount++;
+          }
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: (callback: any) => {
+        visibilityCallback = callback;
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial tool load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const initialCallCount = postMessageCallCount;
+    
+    // Simulate webview becoming invisible
+    mockWebviewView.visible = false;
+    if (visibilityCallback) {
+      visibilityCallback();
+    }
+    
+    // Wait a bit
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    assert.strictEqual(postMessageCallCount, initialCallCount, 'Tools should not be sent when webview becomes invisible');
+  });
+
+  it('should handle visibility changes when view is disposed', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let visibilityCallback: any = null;
+    let disposed = false;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: () => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: () => {
+          if (disposed) {
+            throw new Error('Cannot post message to disposed webview');
+          }
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: (callback: any) => {
+        visibilityCallback = callback;
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial tool load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Simulate disposal
+    disposed = true;
+    (provider as any)._view = undefined;
+    
+    // Simulate visibility change after disposal - should not throw
+    mockWebviewView.visible = true;
+    if (visibilityCallback) {
+      visibilityCallback();
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    assert.ok(true, 'Visibility change after disposal should not throw');
+  });
+
+  it('should send cached tools immediately when becoming visible', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let visibilityCallback: any = null;
+    let postMessageCalls: any[] = [];
+    let postMessageTimestamps: number[] = [];
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: () => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          if (data.type === 'toolsUpdate') {
+            postMessageCalls.push(data);
+            postMessageTimestamps.push(Date.now());
+          }
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: (callback: any) => {
+        visibilityCallback = callback;
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial tool load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const initialCallCount = postMessageCalls.length;
+    assert.ok(initialCallCount > 0, 'Initial tools should be sent');
+    
+    // Clear timestamps for the next test
+    postMessageTimestamps = [];
+    
+    // Simulate webview becoming visible again
+    mockWebviewView.visible = true;
+    if (visibilityCallback) {
+      const beforeCallback = Date.now();
+      visibilityCallback();
+      const afterCallback = Date.now();
+      
+      // Check if cached tools were sent synchronously (within 50ms)
+      const firstNewTimestamp = postMessageTimestamps[0];
+      if (firstNewTimestamp) {
+        const timeDiff = firstNewTimestamp - beforeCallback;
+        assert.ok(timeDiff < 50, 'Cached tools should be sent immediately (synchronously)');
+      }
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    assert.ok(postMessageCalls.length > initialCallCount, 'Cached tools should be sent when becoming visible');
+  });
+
+  it('should refresh tools after sending cached data', async () => {
+    const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+    await ext!.activate();
+    
+    const provider = ext!.exports.getViewProvider();
+    
+    let visibilityCallback: any = null;
+    let postMessageCallCount = 0;
+    
+    const mockWebviewView = {
+      webview: {
+        options: {},
+        html: '',
+        onDidReceiveMessage: () => {
+          return { dispose: () => {} };
+        },
+        asWebviewUri: (uri: vscode.Uri) => {
+          return vscode.Uri.parse('vscode-webview://test' + uri.path);
+        },
+        postMessage: (data: any) => {
+          if (data.type === 'toolsUpdate') {
+            postMessageCallCount++;
+          }
+          return Promise.resolve(true);
+        }
+      },
+      onDidChangeVisibility: (callback: any) => {
+        visibilityCallback = callback;
+        return { dispose: () => {} };
+      },
+      visible: true
+    } as any;
+
+    await provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+    
+    // Wait for initial tool load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const initialCallCount = postMessageCallCount;
+    
+    // Simulate webview becoming visible again
+    mockWebviewView.visible = true;
+    if (visibilityCallback) {
+      visibilityCallback();
+    }
+    
+    // Wait for async refresh
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    // Should have sent cached tools + refreshed tools (could be 1 or 2 calls depending on timing)
+    assert.ok(postMessageCallCount >= initialCallCount + 1, 'Tools should be refreshed after sending cached data');
   });
 });
 

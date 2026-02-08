@@ -184,6 +184,7 @@ function formatToolResult(result: ToolResult): string {
 
 class MCPViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
+	private _cachedTools: GroupedMCPTools | null = null;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -220,6 +221,28 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 			this._context.subscriptions
 		);
 
+		// Register visibility change listener
+		webviewView.onDidChangeVisibility(
+			() => {
+				// Only reload tools when webview becomes visible
+				if (webviewView.visible && this._view) {
+					// Send cached tools immediately if available
+					if (this._cachedTools) {
+						const message: ToolsUpdateMessage = {
+							type: 'toolsUpdate',
+							tools: this._cachedTools
+						};
+						this._view.webview.postMessage(message);
+					}
+					
+					// Then refresh tools asynchronously
+					this._loadAndSendTools();
+				}
+			},
+			undefined,
+			this._context.subscriptions
+		);
+
 		// Load and send tools to webview
 		this._loadAndSendTools();
 	}
@@ -227,6 +250,10 @@ class MCPViewProvider implements vscode.WebviewViewProvider {
 	private async _loadAndSendTools() {
 		try {
 			const groupedTools = await getGroupedTools();
+			
+			// Cache the tools
+			this._cachedTools = groupedTools;
+			
 			if (this._view) {
 				const message: ToolsUpdateMessage = {
 					type: 'toolsUpdate',
