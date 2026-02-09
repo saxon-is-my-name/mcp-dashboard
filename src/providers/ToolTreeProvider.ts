@@ -12,7 +12,7 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 
 	private tools: GroupedMCPTools = {};
 	private _commandDisposable: vscode.Disposable | undefined;
-	private searchQuery: string = '';
+	private filterQuery: string = '';
 	private _treeView: vscode.TreeView<ServerTreeItem | ToolTreeItem> | undefined;
 
 	constructor(private readonly coordinationService: ToolCoordinationService) {
@@ -55,26 +55,26 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 	}
 
 	/**
-	 * Get the current search query
+	 * Get the current filter query
 	 */
-	getSearchQuery(): string {
-		return this.searchQuery;
+	getFilterQuery(): string {
+		return this.filterQuery;
 	}
 
 	/**
-	 * Set search query to filter tools
-	 * @param query Search query string
+	 * Set filter query to filter tools
+	 * @param query Filter query string
 	 */
-	setSearchQuery(query: string): void {
-		this.applySearch(query);
+	setFilterQuery(query: string): void {
+		this.applyFilter(query);
 	}
 
 	/**
-	 * Apply search filter and refresh tree
-	 * @param query Search query string
+	 * Apply filter and refresh tree
+	 * @param query Filter query string
 	 */
-	private applySearch(query: string): void {
-		this.searchQuery = query;
+	private applyFilter(query: string): void {
+		this.filterQuery = query;
 		
 		// Update tree view description to show active filter
 		if (this._treeView) {
@@ -92,16 +92,16 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 	}
 
 	/**
-	 * Check if a tool matches the search query
+	 * Check if a tool matches the filter query
 	 * @param tool Tool to check
-	 * @returns True if tool matches search query
+	 * @returns True if tool matches filter query
 	 */
-	private matchesSearch(tool: ParsedMCPTool): boolean {
-		if (!this.searchQuery) {
+	private matchesFilter(tool: ParsedMCPTool): boolean {
+		if (!this.filterQuery) {
 			return true;
 		}
 
-		const query = this.searchQuery.toLowerCase();
+		const query = this.filterQuery.toLowerCase();
 
 		// Match on tool name
 		if (tool.name.toLowerCase().includes(query)) {
@@ -153,13 +153,13 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 				return [];
 			}
 
-			// If search query is active, filter servers to only show those with matching tools
-			if (this.searchQuery) {
+			// If filter query is active, filter servers to only show those with matching tools
+			if (this.filterQuery) {
 				const serversWithMatches: string[] = [];
 				
 				for (const serverName of Object.keys(this.tools)) {
 					const serverTools = this.tools[serverName] || [];
-					const hasMatchingTools = serverTools.some(tool => this.matchesSearch(tool));
+					const hasMatchingTools = serverTools.some(tool => this.matchesFilter(tool));
 					
 					if (hasMatchingTools) {
 						serversWithMatches.push(serverName);
@@ -181,8 +181,8 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 		if (element instanceof ServerTreeItem) {
 			const serverTools = this.tools[element.label] || [];
 			
-			// Filter tools based on search query
-			const filteredTools = serverTools.filter(tool => this.matchesSearch(tool));
+			// Filter tools based on filter query
+			const filteredTools = serverTools.filter(tool => this.matchesFilter(tool));
 			
 			return filteredTools.map(tool => 
 				new ToolTreeItem(tool, vscode.TreeItemCollapsibleState.None)

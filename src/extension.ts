@@ -7,7 +7,7 @@ import { getOutputPanelHtml } from './templates/outputPanelTemplate';
 import { ToolTreeProvider } from './providers/ToolTreeProvider';
 import { ToolDetailProvider } from './providers/ToolDetailProvider';
 import { ToolCoordinationService } from './services/ToolCoordinationService';
-import { registerSearchCommand } from './commands/searchTools';
+import { registerFindToolsCommand } from './commands/findTools';
 
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
@@ -225,15 +225,15 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider('mcpToolDetail', detailProvider)
 	);
 
-	// Register search command
+	// Register find tools command
 	context.subscriptions.push(
-		registerSearchCommand(treeProvider)
+		registerFindToolsCommand(treeProvider)
 	);
 	
 	// Register clear filter command
 	context.subscriptions.push(
 		vscode.commands.registerCommand('mcp.clearFilter', async () => {
-			await treeProvider.setSearchQuery('');
+			await treeProvider.setFilterQuery('');
 		})
 	);
 

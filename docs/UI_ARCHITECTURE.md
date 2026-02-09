@@ -134,7 +134,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 1. User activates filter:
    - Press Ctrl+F (Cmd+F on Mac) when tree view is focused, OR
    - Click filter icon in tree view title bar
-2. `mcp.searchTools` command is triggered
+2. `mcp.findTools` command is triggered
 3. VS Code shows input box with current filter pre-filled
 4. User enters filter text (or clears it with empty string) and confirms
 5. Command handler calls `treeProvider.setSearchQuery(query)`

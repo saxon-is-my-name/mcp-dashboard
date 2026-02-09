@@ -372,7 +372,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should filter tree to show only matching tools by name', async () => {
-			provider.setSearchQuery('query');
+			provider.setFilterQuery('query');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -384,7 +384,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should be case-insensitive', async () => {
-			provider.setSearchQuery('QUERY');
+			provider.setFilterQuery('QUERY');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -394,18 +394,18 @@ describe('ToolTreeProvider', () => {
 			assert.strictEqual(tools[0].label, 'query');
 		});
 
-		it('should clear search when empty string provided', async () => {
-			provider.setSearchQuery('query');
+		it('should clear filter when empty string provided', async () => {
+			provider.setFilterQuery('query');
 			let servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
 			
-			provider.setSearchQuery('');
+			provider.setFilterQuery('');
 			servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 3);
 		});
 
 		it('should match tool names', async () => {
-			provider.setSearchQuery('backup');
+			provider.setFilterQuery('backup');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -417,7 +417,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should match tool descriptions', async () => {
-			provider.setSearchQuery('SQL');
+			provider.setFilterQuery('SQL');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -428,7 +428,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should match tool tags', async () => {
-			provider.setSearchQuery('http');
+			provider.setFilterQuery('http');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -441,7 +441,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should match server names', async () => {
-			provider.setSearchQuery('filesystem');
+			provider.setFilterQuery('filesystem');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -452,7 +452,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should match fullName', async () => {
-			provider.setSearchQuery('api_fetch');
+			provider.setFilterQuery('api_fetch');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -464,7 +464,7 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should auto-collapse server nodes showing matches', async () => {
-			provider.setSearchQuery('query');
+			provider.setFilterQuery('query');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 1);
@@ -474,14 +474,14 @@ describe('ToolTreeProvider', () => {
 		});
 
 		it('should handle no matches gracefully', async () => {
-			provider.setSearchQuery('nonexistent');
+			provider.setFilterQuery('nonexistent');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 0);
 		});
 
 		it('should match multiple servers when tools match', async () => {
-			provider.setSearchQuery('api');
+			provider.setFilterQuery('api');
 			
 			const servers = await provider.getChildren();
 			assert.strictEqual(servers.length, 2);

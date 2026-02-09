@@ -42,19 +42,19 @@
         "title": "Select Tool"
       },
       {
-        "command": "mcp.searchTools",
-        "title": "Filter Tools",
+        "command": "mcp.findTools",
+        "title": "MCP: Find Tools",
         "icon": "$(filter)"
       },
       {
         "command": "mcp.clearFilter",
-        "title": "Clear Filter",
+        "title": "MCP: Clear Filter",
         "icon": "$(clear-all)"
       }
     ],
     "keybindings": [
       {
-        "command": "mcp.searchTools",
+        "command": "mcp.findTools",
         "key": "ctrl+f",
         "mac": "cmd+f",
         "when": "focusedView == mcpToolTree"
@@ -68,7 +68,7 @@
     "menus": {
       "view/title": [
         {
-          "command": "mcp.searchTools",
+          "command": "mcp.findTools",
           "when": "view == mcpToolTree",
           "group": "navigation"
         },
