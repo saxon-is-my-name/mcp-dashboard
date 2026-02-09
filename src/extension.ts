@@ -7,6 +7,7 @@ import { getOutputPanelHtml } from './templates/outputPanelTemplate';
 import { ToolTreeProvider } from './providers/ToolTreeProvider';
 import { ToolDetailProvider } from './providers/ToolDetailProvider';
 import { ToolCoordinationService } from './services/ToolCoordinationService';
+import { registerSearchCommand } from './commands/searchTools';
 
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
@@ -194,6 +195,9 @@ let detailProvider: ToolDetailProvider;
 let coordinationService: ToolCoordinationService;
 
 export function activate(context: vscode.ExtensionContext) {
+	// Set initial context for filter state
+	vscode.commands.executeCommand('setContext', 'mcp.filterActive', false);
+	
 	// Create coordination service
 	coordinationService = new ToolCoordinationService(context);
 	context.subscriptions.push(coordinationService);
@@ -202,10 +206,15 @@ export function activate(context: vscode.ExtensionContext) {
 	treeProvider = new ToolTreeProvider(coordinationService);
 	context.subscriptions.push(treeProvider);
 	
-	// Register tree view
-	context.subscriptions.push(
-		vscode.window.registerTreeDataProvider('mcpToolTree', treeProvider)
-	);
+	// Create tree view with description support
+	const treeView = vscode.window.createTreeView('mcpToolTree', {
+		treeDataProvider: treeProvider,
+		showCollapseAll: true
+	});
+	context.subscriptions.push(treeView);
+	
+	// Pass tree view to provider so it can update description
+	treeProvider.setTreeView(treeView);
 
 	// Create detail provider
 	detailProvider = new ToolDetailProvider(context.extensionUri, context, coordinationService);
@@ -214,6 +223,18 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register detail webview
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('mcpToolDetail', detailProvider)
+	);
+
+	// Register search command
+	context.subscriptions.push(
+		registerSearchCommand(treeProvider)
+	);
+	
+	// Register clear filter command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('mcp.clearFilter', async () => {
+			await treeProvider.setSearchQuery('');
+		})
 	);
 
 	// Fetch and refresh tree with tools

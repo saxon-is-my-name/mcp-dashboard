@@ -46,6 +46,9 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - Displays server nodes with server icon (`$(server)`) and tooltips
 - Displays tool nodes with tools icon (`$(tools)`) and tooltips containing tool name and description
 - Registers `mcp.selectTool` command for tool selection
+- Provides integrated filter/search functionality with keyboard shortcuts (Ctrl+F to filter, Escape to clear)
+- Updates tree view description to show active filter state (`Filter: "query"`)
+- Manages `mcp.filterActive` context key for conditional UI elements
 - Triggers tree refresh when tool data changes
 
 **Tree Structure**:
@@ -125,6 +128,43 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 4. Provider calls `vscode.lm.invokeTool()` with parameters
 5. Result is formatted and sent to output panel webview
 6. Output panel displays formatted result
+
+### Tool Search Flow
+
+1. User activates filter:
+   - Press Ctrl+F (Cmd+F on Mac) when tree view is focused, OR
+   - Click filter icon in tree view title bar
+2. `mcp.searchTools` command is triggered
+3. VS Code shows input box with current filter pre-filled
+4. User enters filter text (or clears it with empty string) and confirms
+5. Command handler calls `treeProvider.setSearchQuery(query)`
+6. TreeProvider:
+   - Filters tools based on query (matches tool name, description, server name, fullName, and tags)
+   - Updates tree view description to show active filter: `Filter: "query"`
+   - Sets context `mcp.filterActive` to true/false
+   - Case-insensitive matching
+   - Shows only servers with matching tools
+7. Tree view automatically refreshes with filtered results
+8. User can:
+   - Press Escape to clear filter (when tree is focused)
+   - Click clear filter icon (only visible when filter is active)
+   - Click filter icon again to edit existing filter
+
+**Filter Display**:
+- Active filter shown in tree view description: `Filter: "database"`
+- No description shown when filter is cleared
+- Clear filter button only appears when filter is active (conditional menu using `mcp.filterActive` context)
+- Filter persists across tree refreshes
+- Keyboard shortcut (Ctrl+F / Cmd+F) makes it feel like native find functionality
+
+**Filter Matching**:
+- Tool name: `query` matches tools with "query" in name
+- Description: `SQL` matches tools with "SQL" in description
+- Tags: `http` matches tools with "http" tag
+- Server name: `api` matches all tools from "api" server
+- Full name: `database_backup` matches specific tool
+
+**Technical Note**: VS Code's TreeView API doesn't support embedding custom input boxes directly in the tree panel (like the find widget). The current implementation uses `showInputBox` with keyboard shortcuts (Ctrl+F, Escape) to provide a find-like experience.
 
 ## React Components
 
@@ -223,7 +263,6 @@ To customize output display:
 ## Future Enhancements
 
 Potential improvements:
-- Search/filter functionality in tree view
 - Tool favorites/bookmarks
 - Execution history
 - Parameter templates/presets

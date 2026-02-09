@@ -40,8 +40,45 @@
       {
         "command": "mcp.selectTool",
         "title": "Select Tool"
+      },
+      {
+        "command": "mcp.searchTools",
+        "title": "Filter Tools",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "mcp.clearFilter",
+        "title": "Clear Filter",
+        "icon": "$(clear-all)"
       }
-    ]
+    ],
+    "keybindings": [
+      {
+        "command": "mcp.searchTools",
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "when": "focusedView == mcpToolTree"
+      },
+      {
+        "command": "mcp.clearFilter",
+        "key": "escape",
+        "when": "focusedView == mcpToolTree && mcp.filterActive"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mcp.searchTools",
+          "when": "view == mcpToolTree",
+          "group": "navigation"
+        },
+        {
+          "command": "mcp.clearFilter",
+          "when": "view == mcpToolTree && mcp.filterActive",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -307,4 +307,188 @@ describe('ToolTreeProvider', () => {
 			assert.strictEqual(servers[0].label, 'server3');
 		});
 	});
+
+	describe('search', () => {
+		let searchMockTools: GroupedMCPTools;
+
+		beforeEach(() => {
+			// Create more diverse mock data for search testing
+			searchMockTools = {
+				'database': [
+					{
+						name: 'query',
+						description: 'Execute SQL queries on database',
+						server: 'database',
+						fullName: 'database_query',
+						inputSchema: {},
+						tags: ['sql', 'database']
+					},
+					{
+						name: 'backup',
+						description: 'Create database backup',
+						server: 'database',
+						fullName: 'database_backup',
+						inputSchema: {},
+						tags: ['backup', 'maintenance']
+					},
+					{
+						name: 'export',
+						description: 'Export data via API',
+						server: 'database',
+						fullName: 'database_export',
+						inputSchema: {},
+						tags: ['export', 'api']
+					}
+				],
+				'api': [
+					{
+						name: 'fetch',
+						description: 'Fetch data from external API',
+						server: 'api',
+						fullName: 'api_fetch',
+						inputSchema: {},
+						tags: ['http', 'api']
+					},
+					{
+						name: 'post',
+						description: 'Post data to API endpoint',
+						server: 'api',
+						fullName: 'api_post',
+						inputSchema: {},
+						tags: ['http', 'api']
+					}
+				],
+				'filesystem': [
+					{
+						name: 'read',
+						description: 'Read file contents',
+						server: 'filesystem',
+						fullName: 'filesystem_read',
+						inputSchema: {}
+					}
+				]
+			};
+			provider.refresh(searchMockTools);
+		});
+
+		it('should filter tree to show only matching tools by name', async () => {
+			provider.setSearchQuery('query');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			assert.strictEqual(servers[0].label, 'database');
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 1);
+			assert.strictEqual(tools[0].label, 'query');
+		});
+
+		it('should be case-insensitive', async () => {
+			provider.setSearchQuery('QUERY');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 1);
+			assert.strictEqual(tools[0].label, 'query');
+		});
+
+		it('should clear search when empty string provided', async () => {
+			provider.setSearchQuery('query');
+			let servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			
+			provider.setSearchQuery('');
+			servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 3);
+		});
+
+		it('should match tool names', async () => {
+			provider.setSearchQuery('backup');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			assert.strictEqual(servers[0].label, 'database');
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 1);
+			assert.strictEqual(tools[0].label, 'backup');
+		});
+
+		it('should match tool descriptions', async () => {
+			provider.setSearchQuery('SQL');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 1);
+			assert.strictEqual(tools[0].label, 'query');
+		});
+
+		it('should match tool tags', async () => {
+			provider.setSearchQuery('http');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			assert.strictEqual(servers[0].label, 'api');
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 2);
+			const toolNames = tools.map(t => t.label).sort();
+			assert.deepStrictEqual(toolNames, ['fetch', 'post']);
+		});
+
+		it('should match server names', async () => {
+			provider.setSearchQuery('filesystem');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			assert.strictEqual(servers[0].label, 'filesystem');
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 1);
+		});
+
+		it('should match fullName', async () => {
+			provider.setSearchQuery('api_fetch');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			assert.strictEqual(servers[0].label, 'api');
+			
+			const tools = await provider.getChildren(servers[0]);
+			assert.strictEqual(tools.length, 1);
+			assert.strictEqual(tools[0].label, 'fetch');
+		});
+
+		it('should auto-collapse server nodes showing matches', async () => {
+			provider.setSearchQuery('query');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 1);
+			
+			const treeItem = provider.getTreeItem(servers[0]);
+			assert.strictEqual(treeItem.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
+		});
+
+		it('should handle no matches gracefully', async () => {
+			provider.setSearchQuery('nonexistent');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 0);
+		});
+
+		it('should match multiple servers when tools match', async () => {
+			provider.setSearchQuery('api');
+			
+			const servers = await provider.getChildren();
+			assert.strictEqual(servers.length, 2);
+			
+			const serverNames = servers.map(s => s.label).sort();
+			assert.ok(serverNames.includes('api'));
+			assert.ok(serverNames.includes('database')); // 'api' in tags
+		});
+	});
 });
