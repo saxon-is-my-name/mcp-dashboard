@@ -79,40 +79,6 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 }
 
 /**
- * Format a tool result for display
- */
-function formatToolResult(result: ToolResult): string {
-	const lines: string[] = [];
-	
-	if (result.success) {
-		lines.push('✅ Tool execution successful');
-		lines.push('');
-		lines.push('Result:');
-		lines.push('---');
-		
-		// Format the data
-		if (typeof result.data === 'object' && result.data !== null) {
-			lines.push(JSON.stringify(result.data, null, 2));
-		} else {
-			lines.push(String(result.data));
-		}
-	} else {
-		lines.push('❌ Tool execution failed');
-		lines.push('');
-		lines.push('Error:');
-		lines.push('---');
-		lines.push(result.error);
-	}
-	
-	if (result.executionTime !== undefined) {
-		lines.push('');
-		lines.push(`Execution time: ${result.executionTime}ms`);
-	}
-	
-	return lines.join('\n');
-}
-
-/**
  * WebviewViewProvider for displaying tool details
  */
 export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Disposable {
@@ -258,7 +224,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		const result = await invokeTool(fullToolName, parameters);
 
 		// Format the result
-		const formattedOutput = formatToolResult(result);
+		const formattedOutput = JSON.stringify(result, null, 2);
 
 		// Send result to output panel
 		if (this._outputPanel) {

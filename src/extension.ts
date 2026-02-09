@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
-import { MCPTool, ParsedMCPTool, GroupedMCPTools, ToolsUpdateMessage } from './types/mcpTool';
-import { ToolResult, ToolResultSuccess, ToolResultError } from './types/toolResult';
-import { WebviewToExtensionMessage } from './types/webviewMessages';
+import { GroupedMCPTools, MCPTool, ParsedMCPTool } from './types/mcpTool';
+import { ToolResult } from './types/toolResult';
 
-import { getOutputPanelHtml } from './templates/outputPanelTemplate';
-import { ToolTreeProvider } from './providers/ToolTreeProvider';
-import { ToolDetailProvider } from './providers/ToolDetailProvider';
-import { ToolCoordinationService } from './services/ToolCoordinationService';
 import { registerFindToolsCommand } from './commands/findTools';
+import { ToolDetailProvider } from './providers/ToolDetailProvider';
+import { ToolTreeProvider } from './providers/ToolTreeProvider';
+import { ToolCoordinationService } from './services/ToolCoordinationService';
 
 // Store output panel as singleton
 let outputPanel: vscode.WebviewPanel | undefined;
