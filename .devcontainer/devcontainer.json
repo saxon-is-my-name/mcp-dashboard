@@ -9,6 +9,13 @@
 	"features": {
 		"ghcr.io/devcontainer-config/features/dot-config:3": {},
 		"ghcr.io/devcontainers/features/desktop-lite:1.2.8": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"esbenp.prettier-vscode"
+			]
+		}
 	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.

@@ -1,6 +1,8 @@
+out
+dist
 node_modules
-.vscode
+*.min.js
+*.map
+coverage
 .vscode-test
-out/
-*.js.map
 package-lock.json

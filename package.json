@@ -87,7 +87,11 @@
     "build:webview": "webpack --mode production",
     "watch:webview": "webpack --mode development --watch",
     "test": "npm run compile && xvfb-run -a --server-args='-screen 0 1280x1024x24' node ./test/suite/index.js",
-    "test:ui": "jest"
+    "test:ui": "jest",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,html}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,html}\""
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.0",
@@ -110,9 +114,13 @@
     "babel-preset-typescript": "^7.0.0-alpha.19",
     "css-loader": "^7.1.3",
     "eslint": "^8.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "mocha": "^10.0.0",
+    "prettier": "^3.8.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "sinon": "^21.0.1",
