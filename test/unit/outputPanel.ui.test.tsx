@@ -1,7 +1,6 @@
-import * as React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import OutputPanel from '../src/outputPanel';
+import OutputPanel from '../../src/outputPanel';
 
 // Mock the vscode API globally
 const mockVscode = {

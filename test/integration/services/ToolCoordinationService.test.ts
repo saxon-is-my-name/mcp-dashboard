@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { ToolCoordinationService } from '../../src/services/ToolCoordinationService';
-import { ParsedMCPTool } from '../../src/types/mcpTool';
+import { ToolCoordinationService } from '../../../src/services/ToolCoordinationService';
+import { ParsedMCPTool } from '../../../src/types/mcpTool';
 
 describe('ToolCoordinationService', () => {
 	let service: ToolCoordinationService;

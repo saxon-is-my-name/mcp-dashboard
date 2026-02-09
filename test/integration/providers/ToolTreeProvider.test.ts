@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { ToolTreeProvider } from '../../src/providers/ToolTreeProvider';
-import { ToolCoordinationService } from '../../src/services/ToolCoordinationService';
-import { GroupedMCPTools, ParsedMCPTool } from '../../src/types/mcpTool';
-import { ServerTreeItem, ToolTreeItem } from '../../src/types/treeItems';
+import { ToolTreeProvider } from '../../../src/providers/ToolTreeProvider';
+import { ToolCoordinationService } from '../../../src/services/ToolCoordinationService';
+import { GroupedMCPTools, ParsedMCPTool } from '../../../src/types/mcpTool';
+import { ServerTreeItem, ToolTreeItem } from '../../../src/types/treeItems';
 
 describe('ToolTreeProvider', () => {
 	let provider: ToolTreeProvider;

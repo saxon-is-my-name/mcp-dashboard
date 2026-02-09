@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
-import { ToolDetailProvider } from '../../src/providers/ToolDetailProvider';
-import { ToolCoordinationService } from '../../src/services/ToolCoordinationService';
-import { ParsedMCPTool } from '../../src/types/mcpTool';
+import { ToolDetailProvider } from '../../../src/providers/ToolDetailProvider';
+import { ToolCoordinationService } from '../../../src/services/ToolCoordinationService';
+import { ParsedMCPTool } from '../../../src/types/mcpTool';
 
 describe('ToolDetailProvider', () => {
 	let provider: ToolDetailProvider;
