@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ToolDetailView from '../../src/ui/components/ToolDetailView';
 import { ParsedMCPTool } from '../../src/types/mcpTool';
 
 // Mock the vscode API globally
 const mockVscode = {
-	postMessage: jest.fn()
+	postMessage: jest.fn(),
 };
 
 beforeAll(() => {
@@ -25,13 +25,13 @@ describe('ToolDetailView', () => {
 	describe('empty state', () => {
 		it('should show "no tool selected" message when empty', () => {
 			render(<ToolDetailView tool={undefined} loading={false} />);
-			
+
 			expect(screen.getByText(/select a tool from the tree to view details/i)).toBeInTheDocument();
 		});
 
 		it('should not show execute button when empty', () => {
 			render(<ToolDetailView tool={undefined} loading={false} />);
-			
+
 			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
 		});
 	});
@@ -42,11 +42,11 @@ describe('ToolDetailView', () => {
 				name: 'test_tool',
 				description: 'Test description',
 				server: 'test_server',
-				fullName: 'test_server_test_tool'
+				fullName: 'test_server_test_tool',
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={true} />);
-			
+
 			expect(screen.getByText(/loading tool details/i)).toBeInTheDocument();
 		});
 
@@ -55,19 +55,21 @@ describe('ToolDetailView', () => {
 				name: 'test_tool',
 				description: 'Test description',
 				server: 'test_server',
-				fullName: 'test_server_test_tool'
+				fullName: 'test_server_test_tool',
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={true} />);
-			
+
 			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
 		});
 	});
 
 	describe('error state', () => {
 		it('should show error message when error prop is provided', () => {
-			render(<ToolDetailView tool={undefined} loading={false} error="Failed to load tool details" />);
-			
+			render(
+				<ToolDetailView tool={undefined} loading={false} error="Failed to load tool details" />
+			);
+
 			expect(screen.getByText(/failed to load tool details/i)).toBeInTheDocument();
 		});
 
@@ -76,11 +78,11 @@ describe('ToolDetailView', () => {
 				name: 'test_tool',
 				description: 'Test description',
 				server: 'test_server',
-				fullName: 'test_server_test_tool'
+				fullName: 'test_server_test_tool',
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} error="Network error" />);
-			
+
 			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
 		});
 	});
@@ -94,28 +96,28 @@ describe('ToolDetailView', () => {
 			inputSchema: {
 				type: 'object',
 				properties: {
-					param1: { type: 'string', description: 'First parameter' }
+					param1: { type: 'string', description: 'First parameter' },
 				},
-				required: []
-			}
+				required: [],
+			},
 		};
 
 		it('should render tool name and description', () => {
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			expect(screen.getByText('test_tool')).toBeInTheDocument();
 			expect(screen.getByText(/this is a test tool description/i)).toBeInTheDocument();
 		});
 
 		it('should show server name', () => {
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			expect(screen.getByText(/test_server/i)).toBeInTheDocument();
 		});
 
 		it('should show execute button when tool selected', () => {
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			expect(screen.getByRole('button', { name: /execute/i })).toBeInTheDocument();
 		});
 	});
@@ -131,14 +133,14 @@ describe('ToolDetailView', () => {
 					type: 'object',
 					properties: {
 						name: { type: 'string', description: 'Name parameter' },
-						age: { type: 'number', description: 'Age parameter' }
+						age: { type: 'number', description: 'Age parameter' },
 					},
-					required: ['name']
-				}
+					required: ['name'],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			expect(screen.getByLabelText(/name \*/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/age/i)).toBeInTheDocument();
 		});
@@ -152,14 +154,14 @@ describe('ToolDetailView', () => {
 				inputSchema: {
 					type: 'object',
 					properties: {
-						required_param: { type: 'string' }
+						required_param: { type: 'string' },
 					},
-					required: ['required_param']
-				}
+					required: ['required_param'],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			expect(screen.getByLabelText(/required_param \*/i)).toBeInTheDocument();
 		});
 
@@ -174,14 +176,14 @@ describe('ToolDetailView', () => {
 					properties: {
 						text_param: { type: 'string' },
 						num_param: { type: 'number' },
-						bool_param: { type: 'boolean' }
+						bool_param: { type: 'boolean' },
 					},
-					required: []
-				}
+					required: [],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			const textInput = screen.getByLabelText(/text_param/i) as HTMLInputElement;
 			const numInput = screen.getByLabelText(/num_param/i) as HTMLInputElement;
 			const boolInput = screen.getByLabelText(/bool_param/i) as HTMLInputElement;
@@ -200,12 +202,12 @@ describe('ToolDetailView', () => {
 				inputSchema: {
 					type: 'object',
 					properties: {},
-					required: []
-				}
+					required: [],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			expect(screen.getByRole('button', { name: /execute/i })).toBeInTheDocument();
 		});
 	});
@@ -220,14 +222,14 @@ describe('ToolDetailView', () => {
 				inputSchema: {
 					type: 'object',
 					properties: {
-						required_param: { type: 'string' }
+						required_param: { type: 'string' },
 					},
-					required: ['required_param']
-				}
+					required: ['required_param'],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			const executeButton = screen.getByRole('button', { name: /execute/i });
 			fireEvent.click(executeButton);
 
@@ -246,14 +248,14 @@ describe('ToolDetailView', () => {
 				inputSchema: {
 					type: 'object',
 					properties: {
-						param1: { type: 'string' }
+						param1: { type: 'string' },
 					},
-					required: ['param1']
-				}
+					required: ['param1'],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			const input = screen.getByLabelText(/param1 \*/i) as HTMLInputElement;
 			fireEvent.change(input, { target: { value: 'test_value' } });
 
@@ -265,8 +267,8 @@ describe('ToolDetailView', () => {
 				server: 'test_server',
 				command: 'test_tool',
 				parameters: {
-					param1: 'test_value'
-				}
+					param1: 'test_value',
+				},
 			});
 		});
 
@@ -279,14 +281,14 @@ describe('ToolDetailView', () => {
 				inputSchema: {
 					type: 'object',
 					properties: {
-						required_param: { type: 'string' }
+						required_param: { type: 'string' },
 					},
-					required: ['required_param']
-				}
+					required: ['required_param'],
+				},
 			};
 
 			render(<ToolDetailView tool={mockTool} loading={false} />);
-			
+
 			const executeButton = screen.getByRole('button', { name: /execute/i });
 			fireEvent.click(executeButton);
 

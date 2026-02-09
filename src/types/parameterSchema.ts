@@ -9,7 +9,7 @@ export interface JSONSchemaProperty {
 	type?: string;
 	description?: string;
 	enum?: string[];
-	default?: any;
+	default?: unknown;
 	items?: JSONSchemaProperty;
 	properties?: { [key: string]: JSONSchemaProperty };
 }

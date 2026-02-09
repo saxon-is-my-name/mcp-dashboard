@@ -27,12 +27,14 @@
         {
           "id": "mcpToolTree",
           "name": "Tools",
-          "type": "tree"
+          "type": "tree",
+          "icon": "$(list-unordered)"
         },
         {
           "id": "mcpToolDetail",
           "name": "Tool Details",
-          "type": "webview"
+          "type": "webview",
+          "icon": "$(info)"
         }
       ]
     },
@@ -88,10 +90,10 @@
     "watch:webview": "webpack --mode development --watch",
     "test": "npm run compile && xvfb-run -a --server-args='-screen 0 1280x1024x24' node ./test/suite/index.js",
     "test:ui": "jest",
-    "lint": "eslint src --ext .ts,.tsx",
-    "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,json,html}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,html}\""
+    "lint": "eslint src test --ext .ts,.tsx",
+    "lint:fix": "eslint src test --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,html}\" \"test/**/*.{ts,tsx,json,html}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,html}\" \"test/**/*.{ts,tsx,json,html}\""
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.0",

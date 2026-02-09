@@ -9,49 +9,53 @@ describe('ToolDetailProvider', () => {
 	let provider: ToolDetailProvider;
 	let coordinationService: ToolCoordinationService;
 	let mockContext: vscode.ExtensionContext;
-	let workspaceState: Map<string, any>;
-	let mockWebviewView: any;
-	let mockWebview: any;
-	let messageHandler: ((message: any) => Promise<void>) | undefined;
+	let workspaceState: Map<string, unknown>;
+	let mockWebviewView: vscode.WebviewView;
+	let mockWebview: vscode.Webview;
+	let messageHandler: ((message: unknown) => Promise<void>) | undefined;
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 
 		// Create mock workspace state
-		workspaceState = new Map<string, any>();
+		workspaceState = new Map<string, unknown>();
 
 		// Setup mocks
 		messageHandler = undefined;
 		mockWebview = {
 			html: '',
 			options: {},
-			onDidReceiveMessage: sinon.stub().callsFake((handler: any) => {
-				messageHandler = handler;
-				return { dispose: sinon.stub() };
-			}),
+			onDidReceiveMessage: sinon
+				.stub()
+				.callsFake((handler: (message: unknown) => Promise<void>) => {
+					messageHandler = handler;
+					return { dispose: sinon.stub() };
+				}),
 			postMessage: sinon.stub().resolves(true),
-			asWebviewUri: sinon.stub().callsFake((uri: any) => uri),
-			cspSource: 'vscode-webview://test'
-		};
+			asWebviewUri: sinon.stub().callsFake((uri: vscode.Uri) => uri),
+			cspSource: 'vscode-webview://test',
+		} as vscode.Webview;
 
 		mockWebviewView = {
 			webview: mockWebview,
 			visible: true,
+			viewType: 'mcpToolDetail',
+			show: sinon.stub(),
 			onDidChangeVisibility: sinon.stub().returns({ dispose: sinon.stub() }),
-			onDidDispose: sinon.stub().returns({ dispose: sinon.stub() })
-		};
+			onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
+		} as vscode.WebviewView;
 
 		mockContext = {
 			extensionUri: vscode.Uri.parse('file:///test'),
 			subscriptions: [],
 			workspaceState: {
 				get: (key: string) => workspaceState.get(key),
-				update: async (key: string, value: any) => {
+				update: async (key: string, value: unknown) => {
 					workspaceState.set(key, value);
-				}
-			}
-		} as any;
+				},
+			},
+		} as unknown as vscode.ExtensionContext;
 
 		coordinationService = new ToolCoordinationService(mockContext);
 		provider = new ToolDetailProvider(mockContext.extensionUri, mockContext, coordinationService);
@@ -63,31 +67,47 @@ describe('ToolDetailProvider', () => {
 
 	describe('resolveWebviewView', () => {
 		it('should create webview with correct options', () => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
 
 			assert.deepStrictEqual(mockWebview.options, {
 				enableScripts: true,
-				localResourceRoots: [mockContext.extensionUri]
+				localResourceRoots: [mockContext.extensionUri],
 			});
 		});
 
 		it('should set HTML content for webview', () => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
 
 			assert.ok(mockWebview.html, 'HTML should be set');
 			assert.ok(mockWebview.html.includes('<!DOCTYPE html>'), 'HTML should be valid');
 		});
 
 		it('should register message handler', () => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
 
-			assert.ok(mockWebview.onDidReceiveMessage.called, 'Should register message handler');
+			assert.ok((mockWebview.onDidReceiveMessage as any).called, 'Should register message handler');
 		});
 	});
 
 	describe('showToolDetail', () => {
 		beforeEach(() => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
 			(mockWebview.postMessage as sinon.SinonStub).resetHistory();
 		});
 
@@ -100,17 +120,20 @@ describe('ToolDetailProvider', () => {
 				inputSchema: {
 					type: 'object',
 					properties: {
-						param1: { type: 'string', description: 'First parameter' }
+						param1: { type: 'string', description: 'First parameter' },
 					},
-					required: ['param1']
-				}
+					required: ['param1'],
+				},
 			};
 
 			await provider.showToolDetail(mockTool);
 
 			// Should call postMessage at least once
-			assert.ok((mockWebview.postMessage as sinon.SinonStub).called, 'postMessage should be called');
-			
+			assert.ok(
+				(mockWebview.postMessage as sinon.SinonStub).called,
+				'postMessage should be called'
+			);
+
 			// Check last call contains the tool
 			const lastCall = (mockWebview.postMessage as sinon.SinonStub).lastCall;
 			assert.ok(lastCall, 'Should have at least one postMessage call');
@@ -123,14 +146,17 @@ describe('ToolDetailProvider', () => {
 				name: 'test_tool',
 				description: 'Test tool description',
 				server: 'test_server',
-				fullName: 'test_server_test_tool'
+				fullName: 'test_server_test_tool',
 			};
 
 			await provider.showToolDetail(mockTool);
 
 			// Should call postMessage at least twice
-			assert.ok((mockWebview.postMessage as sinon.SinonStub).callCount >= 2, 'Should call postMessage at least twice');
-			
+			assert.ok(
+				(mockWebview.postMessage as sinon.SinonStub).callCount >= 2,
+				'Should call postMessage at least twice'
+			);
+
 			// First call should have loading: true
 			const firstCall = (mockWebview.postMessage as sinon.SinonStub).getCall(0);
 			assert.strictEqual(firstCall.args[0].type, 'toolDetailUpdate');
@@ -144,7 +170,11 @@ describe('ToolDetailProvider', () => {
 		let invokeLmToolStub: sinon.SinonStub;
 
 		beforeEach(() => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
 			(mockWebview.postMessage as sinon.SinonStub).resetHistory();
 
 			// Setup output panel mock
@@ -153,11 +183,11 @@ describe('ToolDetailProvider', () => {
 					html: '',
 					postMessage: sinon.stub().resolves(true),
 					asWebviewUri: sinon.stub().callsFake((uri: any) => uri),
-					cspSource: 'vscode-webview://test'
+					cspSource: 'vscode-webview://test',
 				},
 				reveal: sinon.stub(),
 				onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
-				title: ''
+				title: '',
 			};
 
 			createPanelStub = sandbox.stub(vscode.window, 'createWebviewPanel').returns(mockOutputPanel);
@@ -165,15 +195,17 @@ describe('ToolDetailProvider', () => {
 			// Mock vscode.lm.invokeTool
 			invokeLmToolStub = sandbox.stub();
 			invokeLmToolStub.resolves({
-				content: [{ type: 'text', text: 'Test result' }]
+				content: [{ type: 'text', text: 'Test result' }],
 			});
-			
+
 			// Mock vscode.lm with proper getter
-			const mockTools = [{
-				name: 'test_server_test_tool',
-				description: 'Test tool'
-			}];
-			
+			const mockTools = [
+				{
+					name: 'test_server_test_tool',
+					description: 'Test tool',
+				},
+			];
+
 			// Stub the property getter for tools
 			sandbox.stub(vscode.lm, 'tools').get(() => mockTools);
 			(vscode.lm as any).invokeTool = invokeLmToolStub;
@@ -184,7 +216,7 @@ describe('ToolDetailProvider', () => {
 				type: 'executeCommand',
 				server: 'test_server',
 				command: 'test_tool',
-				parameters: { param1: 'value1' }
+				parameters: { param1: 'value1' },
 			};
 
 			if (messageHandler) {
@@ -192,7 +224,7 @@ describe('ToolDetailProvider', () => {
 			}
 
 			// Give time for async execution
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			assert.ok(invokeLmToolStub.called, 'invokeTool should be called');
 			assert.strictEqual(invokeLmToolStub.getCall(0).args[0], 'test_server_test_tool');
@@ -203,7 +235,7 @@ describe('ToolDetailProvider', () => {
 				type: 'executeCommand',
 				server: 'test_server',
 				command: 'test_tool',
-				parameters: {}
+				parameters: {},
 			};
 
 			if (messageHandler) {
@@ -211,12 +243,15 @@ describe('ToolDetailProvider', () => {
 			}
 
 			// Give time for async execution
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			assert.ok(createPanelStub.called, 'createWebviewPanel should be called');
 			assert.strictEqual(createPanelStub.getCall(0).args[0], 'mcpOutput');
 			assert.ok(createPanelStub.getCall(0).args[3].enableScripts, 'Should enable scripts');
-			assert.ok(createPanelStub.getCall(0).args[3].retainContextWhenHidden, 'Should retain context');
+			assert.ok(
+				createPanelStub.getCall(0).args[3].retainContextWhenHidden,
+				'Should retain context'
+			);
 		});
 
 		it('should send result to output panel', async () => {
@@ -224,7 +259,7 @@ describe('ToolDetailProvider', () => {
 				type: 'executeCommand',
 				server: 'test_server',
 				command: 'test_tool',
-				parameters: {}
+				parameters: {},
 			};
 
 			if (messageHandler) {
@@ -232,14 +267,17 @@ describe('ToolDetailProvider', () => {
 			}
 
 			// Give time for async execution
-			await new Promise(resolve => setTimeout(resolve, 150));
+			await new Promise((resolve) => setTimeout(resolve, 150));
 
-			assert.ok((mockOutputPanel.webview.postMessage as sinon.SinonStub).called, 'Should post message to output panel');
-			
+			assert.ok(
+				(mockOutputPanel.webview.postMessage as sinon.SinonStub).called,
+				'Should post message to output panel'
+			);
+
 			// Find the result message
 			const calls = (mockOutputPanel.webview.postMessage as sinon.SinonStub).getCalls();
 			const resultCall = calls.find((call: sinon.SinonSpyCall) => call.args[0].type === 'result');
-			
+
 			assert.ok(resultCall, 'Should send result message');
 			assert.strictEqual(resultCall.args[0].server, 'test_server');
 			assert.strictEqual(resultCall.args[0].command, 'test_tool');
@@ -248,7 +286,11 @@ describe('ToolDetailProvider', () => {
 
 	describe('empty selection state', () => {
 		beforeEach(() => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
 			(mockWebview.postMessage as sinon.SinonStub).resetHistory();
 		});
 
@@ -263,24 +305,76 @@ describe('ToolDetailProvider', () => {
 	});
 
 	describe('disposal', () => {
-		it('should dispose of subscription and output panel', () => {
-			provider.resolveWebviewView(mockWebviewView, {} as any, {} as any);
-			
+		let createPanelStub: sinon.SinonStub;
+		let mockOutputPanel: any;
+		let invokeLmToolStub: sinon.SinonStub;
+
+		beforeEach(() => {
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
+			(mockWebview.postMessage as sinon.SinonStub).resetHistory();
+
+			// Setup output panel mock with dispose
+			mockOutputPanel = {
+				webview: {
+					html: '',
+					postMessage: sinon.stub().resolves(true),
+					asWebviewUri: sinon.stub().callsFake((uri: any) => uri),
+					cspSource: 'vscode-webview://test',
+				},
+				reveal: sinon.stub(),
+				onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
+				dispose: sinon.stub(),
+				title: '',
+			};
+
+			createPanelStub = sandbox.stub(vscode.window, 'createWebviewPanel').returns(mockOutputPanel);
+
+			// Mock vscode.lm.invokeTool
+			invokeLmToolStub = sandbox.stub();
+			invokeLmToolStub.resolves({
+				content: [{ type: 'text', text: 'Test result' }],
+			});
+
+			// Mock vscode.lm with proper getter
+			const mockTools = [
+				{
+					name: 'test_server_test_tool',
+					description: 'Test tool',
+				},
+			];
+
+			sandbox.stub(vscode.lm, 'tools').get(() => mockTools);
+			(vscode.lm as any).invokeTool = invokeLmToolStub;
+		});
+
+		it('should dispose of subscription and output panel', async () => {
 			// Create output panel by executing a command
 			const message = {
 				type: 'executeCommand',
 				server: 'test_server',
 				command: 'test_tool',
-				parameters: {}
+				parameters: {},
 			};
+
+			if (messageHandler) {
+				await messageHandler(message);
+			}
+
+			// Give time for async execution to create output panel
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Verify output panel was created
+			assert.ok(createPanelStub.called, 'Output panel should be created');
 
 			// Dispose the provider
 			provider.dispose();
 
-			// Verify no errors occur (subscription cleaned up)
-			// Note: We can't directly verify the subscription was disposed,
-			// but we verify no errors occur and the output panel is cleaned up
-			assert.ok(true, 'dispose() should complete without errors');
+			// Verify output panel was disposed
+			assert.ok(mockOutputPanel.dispose.called, 'Output panel dispose should be called');
 		});
 	});
 });

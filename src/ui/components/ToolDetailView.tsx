@@ -4,7 +4,7 @@ import type { ParameterSchema, JSONSchemaProperty } from '../../types/parameterS
 
 // Declare VS Code API type
 declare const acquireVsCodeApi: () => {
-	postMessage: (message: any) => void;
+	postMessage: (message: Record<string, unknown>) => void;
 };
 
 interface ToolDetailViewProps {
@@ -45,7 +45,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 					<label htmlFor={paramName}>{label}</label>
 					<select
 						id={paramName}
-						defaultValue={defaultValue}
+						defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 						onChange={() => handleChange(paramName)}
 					>
 						<option value="">-- Select --</option>
@@ -70,7 +70,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 						<input
 							id={paramName}
 							type="text"
-							defaultValue={defaultValue}
+							defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 							onChange={() => handleChange(paramName)}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
@@ -87,7 +87,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 							id={paramName}
 							type="text"
 							inputMode="numeric"
-							defaultValue={defaultValue}
+							defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 							onChange={() => handleChange(paramName)}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
@@ -102,7 +102,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 							<input
 								id={paramName}
 								type="checkbox"
-								defaultChecked={defaultValue}
+								defaultChecked={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 								onChange={() => handleChange(paramName)}
 							/>
 							{label}
@@ -150,7 +150,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 						<input
 							id={paramName}
 							type="text"
-							defaultValue={defaultValue}
+							defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 							onChange={() => handleChange(paramName)}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
@@ -176,16 +176,16 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 		setValidationErrors({});
 	}, [tool]);
 
-	const collectParameters = (): Record<string, any> => {
+	const collectParameters = (): Record<string, unknown> => {
 		if (!tool?.inputSchema?.properties) {
 			return {};
 		}
 
-		const params: Record<string, any> = {};
+		const params: Record<string, unknown> = {};
 		const { properties } = tool.inputSchema;
 
 		for (const paramName in properties) {
-			const prop = properties[paramName];
+			const prop = properties[paramName] as JSONSchemaProperty;
 			const element = document.getElementById(paramName) as HTMLInputElement | HTMLTextAreaElement;
 
 			if (!element) continue;
@@ -223,7 +223,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 		return params;
 	};
 
-	const validateParameters = (params: Record<string, any>): { [key: string]: string } => {
+	const validateParameters = (params: Record<string, unknown>): { [key: string]: string } => {
 		const errors: { [key: string]: string } = {};
 
 		if (!tool?.inputSchema) {
@@ -234,12 +234,11 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 
 		// Validate types first, then required
 		for (const paramName in properties) {
-			const prop = properties[paramName];
+			const prop = properties[paramName] as JSONSchemaProperty;
 			const element = document.getElementById(paramName) as HTMLInputElement | HTMLTextAreaElement;
 
 			if (!element) continue;
 
-			const value = element.value;
 			const paramValue = params[paramName];
 
 			// Type validation
@@ -257,7 +256,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 		}
 
 		// Required validation
-		for (const paramName of required) {
+		for (const paramName of required as string[]) {
 			if (params[paramName] === undefined || params[paramName] === '') {
 				errors[paramName] = 'This field is required';
 			}
@@ -325,7 +324,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 				<div className="parameters-section">
 					<h3>Parameters</h3>
 					<ParameterInputs
-						schema={tool.inputSchema}
+						schema={tool.inputSchema as ParameterSchema}
 						validationErrors={validationErrors}
 						onInputChange={handleInputChange}
 					/>

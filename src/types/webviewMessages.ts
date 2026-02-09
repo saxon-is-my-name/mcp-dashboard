@@ -7,13 +7,13 @@ export type WebviewToExtensionMessage = {
 	type: 'executeCommand';
 	server: string;
 	command: string;
-	parameters?: any;
+	parameters?: Record<string, unknown>;
 };
 
 /**
  * Messages sent from extension to webview
  */
 export type ExtensionToWebviewMessage =
-	| { type: 'toolsUpdate'; tools: any }
+	| { type: 'toolsUpdate'; tools: ParsedMCPTool[] }
 	| { type: 'error'; message: string }
 	| { type: 'toolDetailUpdate'; tool?: ParsedMCPTool; loading?: boolean };

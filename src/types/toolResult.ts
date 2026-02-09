@@ -7,7 +7,7 @@
  */
 export interface ToolResultSuccess {
 	success: true;
-	data: any;
+	data: unknown;
 	toolName: string;
 	executionTime?: number;
 }

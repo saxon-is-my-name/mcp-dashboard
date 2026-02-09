@@ -1,6 +1,7 @@
 /**
  * Type definitions for MCP tools from vscode.lm API
  */
+import { ParameterSchema } from './parameterSchema';
 
 /**
  * Represents an MCP tool from vscode.lm.tools
@@ -11,9 +12,9 @@ export interface MCPTool {
 	/** Tool description */
 	description: string;
 	/** Input schema for the tool */
-	inputSchema?: any;
+	inputSchema?: object;
 	/** Tags associated with the tool */
-	tags?: string[];
+	tags?: readonly string[];
 }
 
 /**
@@ -29,9 +30,9 @@ export interface ParsedMCPTool {
 	/** Full original name from vscode.lm */
 	fullName: string;
 	/** Input schema for the tool */
-	inputSchema?: any;
+	inputSchema?: ParameterSchema;
 	/** Tags associated with the tool */
-	tags?: string[];
+	tags?: readonly string[];
 }
 
 /**

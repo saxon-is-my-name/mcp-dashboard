@@ -44,7 +44,7 @@ export class ToolCoordinationService {
 	 * Restore selection from workspace state
 	 */
 	private _restoreSelection(): void {
-		const stored = this._context.workspaceState.get<any>('mcp.selectedTool');
+		const stored = this._context.workspaceState.get<ParsedMCPTool | undefined>('mcp.selectedTool');
 
 		if (stored) {
 			// Reconstruct the ParsedMCPTool from stored data

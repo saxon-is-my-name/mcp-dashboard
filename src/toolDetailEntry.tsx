@@ -3,11 +3,6 @@ import * as ReactDOM from 'react-dom/client';
 import ToolDetailView from './ui/components/ToolDetailView';
 import { ParsedMCPTool } from './types/mcpTool';
 
-// Declare VS Code API type
-declare const acquireVsCodeApi: () => {
-	postMessage: (message: any) => void;
-};
-
 const App: React.FC = () => {
 	const [tool, setTool] = React.useState<ParsedMCPTool | undefined>(undefined);
 	const [loading, setLoading] = React.useState<boolean>(false);

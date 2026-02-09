@@ -7,11 +7,8 @@ import { ToolDetailProvider } from './providers/ToolDetailProvider';
 import { ToolTreeProvider } from './providers/ToolTreeProvider';
 import { ToolCoordinationService } from './services/ToolCoordinationService';
 
-// Store output panel as singleton
-let outputPanel: vscode.WebviewPanel | undefined;
-
 // Store extension API for internal use and testing
-let extensionApi: any;
+let extensionApi: typeof vscode.lm | undefined;
 
 /**
  * Fetch all available MCP tools from vscode.lm.tools
@@ -27,7 +24,7 @@ async function getTools(): Promise<MCPTool[]> {
 		const tools = vscode.lm.tools;
 
 		// Convert to our MCPTool interface
-		return tools.map((tool: any) => ({
+		return tools.map((tool) => ({
 			name: tool.name,
 			description: tool.description || '',
 			inputSchema: tool.inputSchema,
@@ -59,7 +56,8 @@ function parseTool(tool: MCPTool): ParsedMCPTool {
 		description: tool.description,
 		server: server,
 		fullName: tool.name,
-		inputSchema: tool.inputSchema,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		inputSchema: tool.inputSchema as any,
 		tags: tool.tags,
 	};
 }
@@ -85,7 +83,10 @@ async function getGroupedTools(): Promise<GroupedMCPTools> {
 /**
  * Invoke an MCP tool using vscode.lm.invokeTool API
  */
-async function invokeTool(toolName: string, parameters: any): Promise<ToolResult> {
+async function invokeTool(
+	toolName: string,
+	parameters: Record<string, unknown>
+): Promise<ToolResult> {
 	const startTime = Date.now();
 	const tokenSource = new vscode.CancellationTokenSource();
 
@@ -102,7 +103,7 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 
 		// Find the tool to get its invocation options
 		const tools = vscode.lm.tools;
-		const tool = tools.find((t: any) => t.name === toolName);
+		const tool = tools.find((t) => t.name === toolName);
 
 		if (!tool) {
 			return {
@@ -123,7 +124,7 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 		const result = await vscode.lm.invokeTool(toolName, options, tokenSource.token);
 
 		// Parse the result
-		let data: any;
+		let data: unknown;
 		if (typeof result === 'object' && result !== null) {
 			data = result;
 		} else if (typeof result === 'string') {
@@ -243,15 +244,18 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 
 	// Return API for testing
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	extensionApi = {
 		getTreeProvider: () => treeProvider,
 		getDetailProvider: () => detailProvider,
 		getCoordinationService: () => coordinationService,
 		getTools: getTools,
 		getGroupedTools: getGroupedTools,
-		invokeTool: invokeTool,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		invokeTool: invokeTool as any,
 		formatToolResult: formatToolResult,
-	};
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	} as any;
 
 	return extensionApi;
 }

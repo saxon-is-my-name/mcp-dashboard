@@ -9,7 +9,10 @@ import { ToolCoordinationService } from '../services/ToolCoordinationService';
 /**
  * Invoke an MCP tool using vscode.lm.invokeTool API
  */
-async function invokeTool(toolName: string, parameters: any): Promise<ToolResult> {
+async function invokeTool(
+	toolName: string,
+	parameters: Record<string, unknown>
+): Promise<ToolResult> {
 	const startTime = Date.now();
 	const tokenSource = new vscode.CancellationTokenSource();
 
@@ -26,7 +29,7 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 
 		// Find the tool to get its invocation options
 		const tools = vscode.lm.tools;
-		const tool = tools.find((t: any) => t.name === toolName);
+		const tool = tools.find((t) => t.name === toolName);
 
 		if (!tool) {
 			return {
@@ -47,7 +50,7 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 		const result = await vscode.lm.invokeTool(toolName, options, tokenSource.token);
 
 		// Parse the result
-		let data: any;
+		let data: unknown;
 		if (typeof result === 'object' && result !== null) {
 			data = result;
 		} else if (typeof result === 'string') {
@@ -110,7 +113,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
+		_context: vscode.WebviewViewResolveContext,
 		_token: vscode.CancellationToken
 	) {
 		this._view = webviewView;
@@ -137,7 +140,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 				}
 			},
 			undefined,
-			this._context.subscriptions
+			this._context.subscriptions //todo should this be the passed context or the this? or should we assign the passed context to this._context in the constructor?
 		);
 	}
 
@@ -177,7 +180,11 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		});
 	}
 
-	private async _handleExecuteCommand(server: string, command: string, parameters: any = {}) {
+	private async _handleExecuteCommand(
+		server: string,
+		command: string,
+		parameters: Record<string, unknown> = {}
+	) {
 		// Create or show output panel
 		if (!this._outputPanel) {
 			this._outputPanel = vscode.window.createWebviewPanel(
@@ -216,7 +223,11 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		await this._executeToolWithRealAPI(server, command, parameters);
 	}
 
-	private async _executeToolWithRealAPI(server: string, command: string, parameters: any) {
+	private async _executeToolWithRealAPI(
+		server: string,
+		command: string,
+		parameters: Record<string, unknown>
+	) {
 		// Reconstruct full tool name (server_command format)
 		const fullToolName = `${server}_${command}`;
 
