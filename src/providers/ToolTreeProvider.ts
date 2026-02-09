@@ -6,9 +6,15 @@ import { ToolCoordinationService } from '../services/ToolCoordinationService';
 /**
  * Tree data provider for displaying servers and tools in a two-level hierarchy
  */
-export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem | ToolTreeItem>, vscode.Disposable {
-	private _onDidChangeTreeData: vscode.EventEmitter<ServerTreeItem | ToolTreeItem | undefined | null | void> = new vscode.EventEmitter<ServerTreeItem | ToolTreeItem | undefined | null | void>();
-	readonly onDidChangeTreeData: vscode.Event<ServerTreeItem | ToolTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
+export class ToolTreeProvider
+	implements vscode.TreeDataProvider<ServerTreeItem | ToolTreeItem>, vscode.Disposable
+{
+	private _onDidChangeTreeData: vscode.EventEmitter<
+		ServerTreeItem | ToolTreeItem | undefined | null | void
+	> = new vscode.EventEmitter<ServerTreeItem | ToolTreeItem | undefined | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<
+		ServerTreeItem | ToolTreeItem | undefined | null | void
+	> = this._onDidChangeTreeData.event;
 
 	private tools: GroupedMCPTools = {};
 	private _commandDisposable: vscode.Disposable | undefined;
@@ -75,7 +81,7 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 	 */
 	private applyFilter(query: string): void {
 		this.filterQuery = query;
-		
+
 		// Update tree view description to show active filter
 		if (this._treeView) {
 			if (query) {
@@ -84,10 +90,10 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 				this._treeView.description = undefined;
 			}
 		}
-		
+
 		// Set context key for when clause
 		vscode.commands.executeCommand('setContext', 'mcp.filterActive', !!query);
-		
+
 		this._onDidChangeTreeData.fire();
 	}
 
@@ -146,7 +152,9 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 	 * @param element The parent node (undefined for root)
 	 * @returns Array of child nodes
 	 */
-	async getChildren(element?: ServerTreeItem | ToolTreeItem): Promise<(ServerTreeItem | ToolTreeItem)[]> {
+	async getChildren(
+		element?: ServerTreeItem | ToolTreeItem
+	): Promise<(ServerTreeItem | ToolTreeItem)[]> {
 		// If no element provided, return server nodes (root level)
 		if (!element) {
 			if (!this.tools || Object.keys(this.tools).length === 0) {
@@ -156,36 +164,39 @@ export class ToolTreeProvider implements vscode.TreeDataProvider<ServerTreeItem 
 			// If filter query is active, filter servers to only show those with matching tools
 			if (this.filterQuery) {
 				const serversWithMatches: string[] = [];
-				
+
 				for (const serverName of Object.keys(this.tools)) {
 					const serverTools = this.tools[serverName] || [];
-					const hasMatchingTools = serverTools.some(tool => this.matchesFilter(tool));
-					
+					const hasMatchingTools = serverTools.some((tool) => this.matchesFilter(tool));
+
 					if (hasMatchingTools) {
 						serversWithMatches.push(serverName);
 					}
 				}
 
-				return serversWithMatches.sort().map(serverName => 
-					new ServerTreeItem(serverName, vscode.TreeItemCollapsibleState.Collapsed)
-				);
+				return serversWithMatches
+					.sort()
+					.map(
+						(serverName) =>
+							new ServerTreeItem(serverName, vscode.TreeItemCollapsibleState.Collapsed)
+					);
 			}
 
 			const serverNames = Object.keys(this.tools).sort();
-			return serverNames.map(serverName => 
-				new ServerTreeItem(serverName, vscode.TreeItemCollapsibleState.Collapsed)
+			return serverNames.map(
+				(serverName) => new ServerTreeItem(serverName, vscode.TreeItemCollapsibleState.Collapsed)
 			);
 		}
 
 		// If element is a server, return its tools
 		if (element instanceof ServerTreeItem) {
 			const serverTools = this.tools[element.label] || [];
-			
+
 			// Filter tools based on filter query
-			const filteredTools = serverTools.filter(tool => this.matchesFilter(tool));
-			
-			return filteredTools.map(tool => 
-				new ToolTreeItem(tool, vscode.TreeItemCollapsibleState.None)
+			const filteredTools = serverTools.filter((tool) => this.matchesFilter(tool));
+
+			return filteredTools.map(
+				(tool) => new ToolTreeItem(tool, vscode.TreeItemCollapsibleState.None)
 			);
 		}
 

@@ -28,16 +28,16 @@ export class ToolTreeItem extends vscode.TreeItem {
 		this.description = tool.description;
 		this.iconPath = new vscode.ThemeIcon('tools');
 		this.contextValue = 'tool';
-		
+
 		// Set tooltip with tool name and description
 		const description = tool.description || 'No description';
 		this.tooltip = `${tool.name}\n${description}`;
-		
+
 		// Add command for tool selection
 		this.command = {
 			command: 'mcp.selectTool',
 			title: 'Select Tool',
-			arguments: [tool]
+			arguments: [tool],
 		};
 	}
 }

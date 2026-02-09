@@ -22,7 +22,7 @@ const OutputPanel: React.FC = () => {
 				setState({
 					type: 'loading',
 					server: message.server,
-					command: message.command
+					command: message.command,
 				});
 			} else if (message.type === 'result') {
 				setState({
@@ -31,7 +31,7 @@ const OutputPanel: React.FC = () => {
 					command: message.command,
 					output: message.output,
 					result: message.result,
-					timestamp: message.timestamp
+					timestamp: message.timestamp,
 				});
 			}
 		};
@@ -47,22 +47,31 @@ const OutputPanel: React.FC = () => {
 		<div data-testid="output-panel">
 			{state.type === 'loading' ? (
 				<div data-testid="loading-state">
-					<div>⏳ Executing {state.server && state.command ? `${state.server} › ${state.command}` : 'command'}...</div>
+					<div>
+						⏳ Executing{' '}
+						{state.server && state.command ? `${state.server} › ${state.command}` : 'command'}...
+					</div>
 				</div>
 			) : (
 				<div data-testid="result-state">
 					<div>
-						<strong>{state.server} › {state.command}</strong>
+						<strong>
+							{state.server} › {state.command}
+						</strong>
 					</div>
 					{state.result && (
-						<div style={{ 
-							marginTop: '10px', 
-							marginBottom: '10px',
-							padding: '8px 12px',
-							borderRadius: '4px',
-							backgroundColor: state.result.success ? 'rgba(0, 128, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)',
-							borderLeft: `3px solid ${state.result.success ? 'green' : 'red'}`
-						}}>
+						<div
+							style={{
+								marginTop: '10px',
+								marginBottom: '10px',
+								padding: '8px 12px',
+								borderRadius: '4px',
+								backgroundColor: state.result.success
+									? 'rgba(0, 128, 0, 0.1)'
+									: 'rgba(255, 0, 0, 0.1)',
+								borderLeft: `3px solid ${state.result.success ? 'green' : 'red'}`,
+							}}
+						>
 							<strong>{state.result.success ? '✅ Success' : '❌ Error'}</strong>
 							{state.result.executionTime && (
 								<span style={{ marginLeft: '10px', fontSize: '0.9em', opacity: 0.8 }}>

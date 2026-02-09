@@ -9,11 +9,11 @@ import { ToolTreeProvider } from '../providers/ToolTreeProvider';
 export function registerFindToolsCommand(treeProvider: ToolTreeProvider): vscode.Disposable {
 	return vscode.commands.registerCommand('mcp.findTools', async () => {
 		const currentFilter = treeProvider.getFilterQuery();
-		
+
 		const result = await vscode.window.showInputBox({
 			prompt: 'Filter tools by name, description, tags, or server',
 			placeHolder: 'Type to filter... (leave empty to show all)',
-			value: currentFilter
+			value: currentFilter,
 		});
 
 		// If user cancels (undefined), don't change filter

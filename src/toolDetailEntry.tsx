@@ -16,7 +16,7 @@ const App: React.FC = () => {
 		// Handle messages from extension
 		const messageHandler = (event: MessageEvent) => {
 			const message = event.data;
-			
+
 			switch (message.type) {
 				case 'toolDetailUpdate':
 					setTool(message.tool);
@@ -26,7 +26,7 @@ const App: React.FC = () => {
 		};
 
 		window.addEventListener('message', messageHandler);
-		
+
 		return () => {
 			window.removeEventListener('message', messageHandler);
 		};

@@ -25,13 +25,13 @@ async function getTools(): Promise<MCPTool[]> {
 		}
 
 		const tools = vscode.lm.tools;
-		
+
 		// Convert to our MCPTool interface
 		return tools.map((tool: any) => ({
 			name: tool.name,
 			description: tool.description || '',
 			inputSchema: tool.inputSchema,
-			tags: tool.tags
+			tags: tool.tags,
 		}));
 	} catch (error) {
 		console.error('Error fetching tools from vscode.lm:', error);
@@ -60,7 +60,7 @@ function parseTool(tool: MCPTool): ParsedMCPTool {
 		server: server,
 		fullName: tool.name,
 		inputSchema: tool.inputSchema,
-		tags: tool.tags
+		tags: tool.tags,
 	};
 }
 
@@ -88,7 +88,7 @@ async function getGroupedTools(): Promise<GroupedMCPTools> {
 async function invokeTool(toolName: string, parameters: any): Promise<ToolResult> {
 	const startTime = Date.now();
 	const tokenSource = new vscode.CancellationTokenSource();
-	
+
 	try {
 		// Check if vscode.lm API is available
 		if (!vscode.lm || !vscode.lm.invokeTool) {
@@ -96,27 +96,27 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 				success: false,
 				error: 'vscode.lm.invokeTool API not available',
 				toolName: toolName,
-				executionTime: Date.now() - startTime
+				executionTime: Date.now() - startTime,
 			};
 		}
 
 		// Find the tool to get its invocation options
 		const tools = vscode.lm.tools;
 		const tool = tools.find((t: any) => t.name === toolName);
-		
+
 		if (!tool) {
 			return {
 				success: false,
 				error: `Tool '${toolName}' not found`,
 				toolName: toolName,
-				executionTime: Date.now() - startTime
+				executionTime: Date.now() - startTime,
 			};
 		}
 
 		// Create invocation options
 		const options = {
 			toolInvocationToken: undefined, // Not in a chat context
-			input: parameters
+			input: parameters,
 		};
 
 		// Invoke the tool with cancellation token
@@ -140,14 +140,14 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 			success: true,
 			data: data,
 			toolName: toolName,
-			executionTime: Date.now() - startTime
+			executionTime: Date.now() - startTime,
 		};
 	} catch (error) {
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : String(error),
 			toolName: toolName,
-			executionTime: Date.now() - startTime
+			executionTime: Date.now() - startTime,
 		};
 	} finally {
 		tokenSource.dispose();
@@ -159,13 +159,13 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
  */
 function formatToolResult(result: ToolResult): string {
 	const lines: string[] = [];
-	
+
 	if (result.success) {
 		lines.push('✅ Tool execution successful');
 		lines.push('');
 		lines.push('Result:');
 		lines.push('---');
-		
+
 		// Format the data
 		if (typeof result.data === 'object' && result.data !== null) {
 			lines.push(JSON.stringify(result.data, null, 2));
@@ -179,12 +179,12 @@ function formatToolResult(result: ToolResult): string {
 		lines.push('---');
 		lines.push(result.error);
 	}
-	
+
 	if (result.executionTime !== undefined) {
 		lines.push('');
 		lines.push(`Execution time: ${result.executionTime}ms`);
 	}
-	
+
 	return lines.join('\n');
 }
 
@@ -195,7 +195,7 @@ let coordinationService: ToolCoordinationService;
 export function activate(context: vscode.ExtensionContext) {
 	// Set initial context for filter state
 	vscode.commands.executeCommand('setContext', 'mcp.filterActive', false);
-	
+
 	// Create coordination service
 	coordinationService = new ToolCoordinationService(context);
 	context.subscriptions.push(coordinationService);
@@ -203,31 +203,29 @@ export function activate(context: vscode.ExtensionContext) {
 	// Create tree provider
 	treeProvider = new ToolTreeProvider(coordinationService);
 	context.subscriptions.push(treeProvider);
-	
+
 	// Create tree view with description support
 	const treeView = vscode.window.createTreeView('mcpToolTree', {
 		treeDataProvider: treeProvider,
-		showCollapseAll: true
+		showCollapseAll: true,
 	});
 	context.subscriptions.push(treeView);
-	
+
 	// Pass tree view to provider so it can update description
 	treeProvider.setTreeView(treeView);
 
 	// Create detail provider
 	detailProvider = new ToolDetailProvider(context.extensionUri, context, coordinationService);
 	context.subscriptions.push(detailProvider);
-	
+
 	// Register detail webview
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('mcpToolDetail', detailProvider)
 	);
 
 	// Register find tools command
-	context.subscriptions.push(
-		registerFindToolsCommand(treeProvider)
-	);
-	
+	context.subscriptions.push(registerFindToolsCommand(treeProvider));
+
 	// Register clear filter command
 	context.subscriptions.push(
 		vscode.commands.registerCommand('mcp.clearFilter', async () => {
@@ -236,11 +234,13 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Fetch and refresh tree with tools
-	getGroupedTools().then(tools => {
-		treeProvider.refresh(tools);
-	}).catch(error => {
-		console.error('Error loading initial tools:', error);
-	});
+	getGroupedTools()
+		.then((tools) => {
+			treeProvider.refresh(tools);
+		})
+		.catch((error) => {
+			console.error('Error loading initial tools:', error);
+		});
 
 	// Return API for testing
 	extensionApi = {
@@ -250,9 +250,9 @@ export function activate(context: vscode.ExtensionContext) {
 		getTools: getTools,
 		getGroupedTools: getGroupedTools,
 		invokeTool: invokeTool,
-		formatToolResult: formatToolResult
+		formatToolResult: formatToolResult,
 	};
-	
+
 	return extensionApi;
 }
 

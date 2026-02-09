@@ -3,5 +3,5 @@
  * If a case is not handled, TypeScript will error at compile time
  */
 export function assertNever(x: never): never {
-    throw new Error(`Unhandled message type: ${JSON.stringify(x)}`);
+	throw new Error(`Unhandled message type: ${JSON.stringify(x)}`);
 }

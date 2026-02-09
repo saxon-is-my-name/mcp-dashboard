@@ -12,7 +12,7 @@ import { ToolCoordinationService } from '../services/ToolCoordinationService';
 async function invokeTool(toolName: string, parameters: any): Promise<ToolResult> {
 	const startTime = Date.now();
 	const tokenSource = new vscode.CancellationTokenSource();
-	
+
 	try {
 		// Check if vscode.lm API is available
 		if (!vscode.lm || !vscode.lm.invokeTool) {
@@ -20,27 +20,27 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 				success: false,
 				error: 'vscode.lm.invokeTool API not available',
 				toolName: toolName,
-				executionTime: Date.now() - startTime
+				executionTime: Date.now() - startTime,
 			};
 		}
 
 		// Find the tool to get its invocation options
 		const tools = vscode.lm.tools;
 		const tool = tools.find((t: any) => t.name === toolName);
-		
+
 		if (!tool) {
 			return {
 				success: false,
 				error: `Tool '${toolName}' not found`,
 				toolName: toolName,
-				executionTime: Date.now() - startTime
+				executionTime: Date.now() - startTime,
 			};
 		}
 
 		// Create invocation options
 		const options = {
 			toolInvocationToken: undefined, // Not in a chat context
-			input: parameters
+			input: parameters,
 		};
 
 		// Invoke the tool with cancellation token
@@ -64,14 +64,14 @@ async function invokeTool(toolName: string, parameters: any): Promise<ToolResult
 			success: true,
 			data: data,
 			toolName: toolName,
-			executionTime: Date.now() - startTime
+			executionTime: Date.now() - startTime,
 		};
 	} catch (error) {
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : String(error),
 			toolName: toolName,
-			executionTime: Date.now() - startTime
+			executionTime: Date.now() - startTime,
 		};
 	} finally {
 		tokenSource.dispose();
@@ -111,13 +111,13 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken,
+		_token: vscode.CancellationToken
 	) {
 		this._view = webviewView;
-		
+
 		webviewView.webview.options = {
 			enableScripts: true,
-			localResourceRoots: [this._extensionUri]
+			localResourceRoots: [this._extensionUri],
 		};
 
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -153,7 +153,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		if (!tool) {
 			this._view.webview.postMessage({
 				type: 'toolDetailUpdate',
-				tool: undefined
+				tool: undefined,
 			});
 			return;
 		}
@@ -162,18 +162,18 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		this._view.webview.postMessage({
 			type: 'toolDetailUpdate',
 			tool: tool,
-			loading: true
+			loading: true,
 		});
 
 		// For now, we already have the full tool details (inputSchema)
 		// In a real implementation, we might fetch additional details here
 		// Simulate async fetch with a small delay
-		await new Promise(resolve => setTimeout(resolve, 100));
+		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		// Send final tool details
 		this._view.webview.postMessage({
 			type: 'toolDetailUpdate',
-			tool: tool
+			tool: tool,
 		});
 	}
 
@@ -187,7 +187,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 				{
 					enableScripts: true,
 					localResourceRoots: [this._extensionUri],
-					retainContextWhenHidden: true
+					retainContextWhenHidden: true,
 				}
 			);
 
@@ -209,7 +209,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		this._outputPanel.webview.postMessage({
 			type: 'loading',
 			server: server,
-			command: command
+			command: command,
 		});
 
 		// Execute the tool using real VS Code API
@@ -234,7 +234,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 				command: command,
 				output: formattedOutput,
 				result: result,
-				timestamp: new Date().toLocaleString()
+				timestamp: new Date().toLocaleString(),
 			});
 		}
 	}

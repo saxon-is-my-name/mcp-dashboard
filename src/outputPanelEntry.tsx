@@ -5,10 +5,10 @@ import OutputPanel from './outputPanel';
 // Wait for DOM to be ready
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <OutputPanel />
-    </React.StrictMode>
-  );
+	const root = ReactDOM.createRoot(rootElement);
+	root.render(
+		<React.StrictMode>
+			<OutputPanel />
+		</React.StrictMode>
+	);
 }

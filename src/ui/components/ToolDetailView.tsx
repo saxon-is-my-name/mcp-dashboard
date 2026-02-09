@@ -19,7 +19,11 @@ interface ParameterInputsProps {
 	onInputChange?: (paramName: string) => void;
 }
 
-const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErrors = {}, onInputChange }) => {
+const ParameterInputs: React.FC<ParameterInputsProps> = ({
+	schema,
+	validationErrors = {},
+	onInputChange,
+}) => {
 	const { properties = {}, required = [] } = schema;
 
 	const handleChange = (paramName: string) => {
@@ -39,14 +43,16 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 			return (
 				<div key={paramName}>
 					<label htmlFor={paramName}>{label}</label>
-					<select 
-						id={paramName} 
+					<select
+						id={paramName}
 						defaultValue={defaultValue}
 						onChange={() => handleChange(paramName)}
 					>
 						<option value="">-- Select --</option>
-						{enumValues.map(value => (
-							<option key={value} value={value}>{value}</option>
+						{enumValues.map((value) => (
+							<option key={value} value={value}>
+								{value}
+							</option>
 						))}
 					</select>
 					{description && <div className="parameter-description">{description}</div>}
@@ -71,7 +77,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
 					</div>
 				);
-			
+
 			case 'number':
 			case 'integer':
 				return (
@@ -88,7 +94,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
 					</div>
 				);
-			
+
 			case 'boolean':
 				return (
 					<div key={paramName}>
@@ -105,7 +111,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
 					</div>
 				);
-			
+
 			case 'object':
 				return (
 					<div key={paramName}>
@@ -120,7 +126,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
 					</div>
 				);
-			
+
 			case 'array':
 				return (
 					<div key={paramName}>
@@ -135,7 +141,7 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({ schema, validationErr
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
 					</div>
 				);
-			
+
 			default:
 				// Default to text input for unknown types
 				return (
@@ -181,7 +187,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 		for (const paramName in properties) {
 			const prop = properties[paramName];
 			const element = document.getElementById(paramName) as HTMLInputElement | HTMLTextAreaElement;
-			
+
 			if (!element) continue;
 
 			// Handle different input types based on schema type
@@ -219,7 +225,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 
 	const validateParameters = (params: Record<string, any>): { [key: string]: string } => {
 		const errors: { [key: string]: string } = {};
-		
+
 		if (!tool?.inputSchema) {
 			return errors;
 		}
@@ -230,7 +236,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 		for (const paramName in properties) {
 			const prop = properties[paramName];
 			const element = document.getElementById(paramName) as HTMLInputElement | HTMLTextAreaElement;
-			
+
 			if (!element) continue;
 
 			const value = element.value;
@@ -276,14 +282,14 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 			type: 'executeCommand',
 			server: tool.server,
 			command: tool.name,
-			parameters: params
+			parameters: params,
 		});
 	};
 
 	const handleInputChange = (paramName: string) => {
 		// Clear validation error for this parameter
 		if (validationErrors[paramName]) {
-			setValidationErrors(prev => {
+			setValidationErrors((prev) => {
 				const next = { ...prev };
 				delete next[paramName];
 				return next;
@@ -293,29 +299,17 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 
 	// Show loading state
 	if (loading) {
-		return (
-			<div className="loading-state">
-				Loading tool details...
-			</div>
-		);
+		return <div className="loading-state">Loading tool details...</div>;
 	}
 
 	// Show error state
 	if (error) {
-		return (
-			<div className="error-state">
-				{error}
-			</div>
-		);
+		return <div className="error-state">{error}</div>;
 	}
 
 	// Show empty state
 	if (!tool) {
-		return (
-			<div className="empty-state">
-				Select a tool from the tree to view details
-			</div>
-		);
+		return <div className="empty-state">Select a tool from the tree to view details</div>;
 	}
 
 	// Show tool details
@@ -330,8 +324,8 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 			{tool.inputSchema?.properties && Object.keys(tool.inputSchema.properties).length > 0 && (
 				<div className="parameters-section">
 					<h3>Parameters</h3>
-					<ParameterInputs 
-						schema={tool.inputSchema} 
+					<ParameterInputs
+						schema={tool.inputSchema}
 						validationErrors={validationErrors}
 						onInputChange={handleInputChange}
 					/>

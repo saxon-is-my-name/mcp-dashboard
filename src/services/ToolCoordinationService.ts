@@ -8,7 +8,7 @@ import { ParsedMCPTool } from '../types/mcpTool';
 export class ToolCoordinationService {
 	private _selectedTool: ParsedMCPTool | undefined;
 	private _onSelectionChanged = new vscode.EventEmitter<ParsedMCPTool | undefined>();
-	
+
 	/**
 	 * Event fired when the selected tool changes
 	 */
@@ -32,10 +32,10 @@ export class ToolCoordinationService {
 	 */
 	selectTool(tool: ParsedMCPTool | undefined): void {
 		this._selectedTool = tool;
-		
+
 		// Persist to workspace state asynchronously
 		this._persistSelection(tool);
-		
+
 		// Notify listeners
 		this._onSelectionChanged.fire(tool);
 	}
@@ -45,7 +45,7 @@ export class ToolCoordinationService {
 	 */
 	private _restoreSelection(): void {
 		const stored = this._context.workspaceState.get<any>('mcp.selectedTool');
-		
+
 		if (stored) {
 			// Reconstruct the ParsedMCPTool from stored data
 			this._selectedTool = {
@@ -53,7 +53,7 @@ export class ToolCoordinationService {
 				name: stored.name,
 				description: stored.description,
 				server: stored.server,
-				inputSchema: stored.inputSchema
+				inputSchema: stored.inputSchema,
 			};
 		}
 	}
@@ -69,7 +69,7 @@ export class ToolCoordinationService {
 				name: tool.name,
 				description: tool.description,
 				server: tool.server,
-				inputSchema: tool.inputSchema
+				inputSchema: tool.inputSchema,
 			});
 		} else {
 			// Clear the selection
