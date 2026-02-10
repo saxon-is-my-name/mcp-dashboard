@@ -137,6 +137,10 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 							message.parameters || {}
 						);
 						break;
+					case 'focusTree':
+						// Focus the tree view when requested from webview
+						vscode.commands.executeCommand('mcpToolTree.focus');
+						break;
 				}
 			},
 			undefined,

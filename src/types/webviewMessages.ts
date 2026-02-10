@@ -3,12 +3,16 @@ import { ParsedMCPTool } from './mcpTool';
 /**
  * Messages sent from webview to extension
  */
-export type WebviewToExtensionMessage = {
-	type: 'executeCommand';
-	server: string;
-	command: string;
-	parameters?: Record<string, unknown>;
-};
+export type WebviewToExtensionMessage =
+	| {
+			type: 'executeCommand';
+			server: string;
+			command: string;
+			parameters?: Record<string, unknown>;
+	  }
+	| {
+			type: 'focusTree';
+	  };
 
 /**
  * Messages sent from extension to webview

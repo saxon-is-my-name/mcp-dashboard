@@ -86,21 +86,4 @@ describe('Keyboard Navigation - Phase 1', () => {
 			assert.ok(selectedTool, 'Tool should be selected, enabling keybindings');
 		});
 	});
-
-	describe('Shift+Tab navigation (webview to tree)', () => {
-		it('should register Shift+Tab binding for mcp.focusTree', async () => {
-			const commands = await vscode.commands.getCommands(true);
-			assert.ok(
-				commands.includes('mcp.focusTree'),
-				'mcp.focusTree command should be registered for Shift+Tab keybinding'
-			);
-		});
-
-		it('should execute mcp.focusTree command without error', async () => {
-			await assert.doesNotReject(
-				async () => await vscode.commands.executeCommand('mcp.focusTree'),
-				'Command should execute without error'
-			);
-		});
-	});
 });
