@@ -196,6 +196,8 @@ let coordinationService: ToolCoordinationService;
 export function activate(context: vscode.ExtensionContext) {
 	// Set initial context for filter state
 	vscode.commands.executeCommand('setContext', 'mcp.filterActive', false);
+	// Set initial context for tool selected state
+	vscode.commands.executeCommand('setContext', 'mcp.toolSelected', false);
 
 	// Create coordination service
 	coordinationService = new ToolCoordinationService(context);
@@ -231,6 +233,20 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('mcp.clearFilter', async () => {
 			await treeProvider.setFilterQuery('');
+		})
+	);
+
+	// Register focus detail command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('mcp.focusDetail', async () => {
+			await vscode.commands.executeCommand('mcpToolDetail.focus');
+		})
+	);
+
+	// Register focus tree command (for navigating back from webview)
+	context.subscriptions.push(
+		vscode.commands.registerCommand('mcp.focusTree', async () => {
+			await vscode.commands.executeCommand('mcpToolTree.focus');
 		})
 	);
 

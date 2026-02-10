@@ -33,6 +33,9 @@ export class ToolCoordinationService {
 	selectTool(tool: ParsedMCPTool | undefined): void {
 		this._selectedTool = tool;
 
+		// Set context key for keyboard navigation
+		vscode.commands.executeCommand('setContext', 'mcp.toolSelected', !!tool);
+
 		// Persist to workspace state asynchronously
 		this._persistSelection(tool);
 

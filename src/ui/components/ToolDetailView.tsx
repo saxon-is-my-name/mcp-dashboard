@@ -17,12 +17,16 @@ interface ParameterInputsProps {
 	schema: ParameterSchema;
 	validationErrors?: { [key: string]: string };
 	onInputChange?: (paramName: string) => void;
+	firstInputRef?: React.RefObject<
+		HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null
+	>;
 }
 
 const ParameterInputs: React.FC<ParameterInputsProps> = ({
 	schema,
 	validationErrors = {},
 	onInputChange,
+	firstInputRef,
 }) => {
 	const { properties = {}, required = [] } = schema;
 
@@ -32,11 +36,14 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 		}
 	};
 
-	const renderInput = (paramName: string, prop: JSONSchemaProperty) => {
+	const renderInput = (paramName: string, prop: JSONSchemaProperty, isFirst: boolean) => {
 		const isRequired = required.includes(paramName);
 		const label = `${paramName}${isRequired ? ' *' : ''}`;
 		const { type, description, enum: enumValues, default: defaultValue } = prop;
 		const hasError = !!validationErrors[paramName];
+
+		// Determine if this should receive the ref
+		const shouldAttachRef = isFirst && firstInputRef;
 
 		// Handle enum types with dropdown
 		if (enumValues && enumValues.length > 0) {
@@ -47,6 +54,9 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 						id={paramName}
 						defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 						onChange={() => handleChange(paramName)}
+						ref={
+							shouldAttachRef ? (firstInputRef as React.RefObject<HTMLSelectElement>) : undefined
+						}
 					>
 						<option value="">-- Select --</option>
 						{enumValues.map((value) => (
@@ -72,6 +82,9 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 							type="text"
 							defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 							onChange={() => handleChange(paramName)}
+							ref={
+								shouldAttachRef ? (firstInputRef as React.RefObject<HTMLInputElement>) : undefined
+							}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
@@ -89,6 +102,9 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 							inputMode="numeric"
 							defaultValue={defaultValue as any} // eslint-disable-line @typescript-eslint/no-explicit-any
 							onChange={() => handleChange(paramName)}
+							ref={
+								shouldAttachRef ? (firstInputRef as React.RefObject<HTMLInputElement>) : undefined
+							}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
@@ -121,6 +137,11 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 							data-json-type="object"
 							defaultValue={defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : ''}
 							onChange={() => handleChange(paramName)}
+							ref={
+								shouldAttachRef
+									? (firstInputRef as React.RefObject<HTMLTextAreaElement>)
+									: undefined
+							}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
@@ -136,6 +157,11 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 							data-json-type="array"
 							defaultValue={defaultValue !== undefined ? JSON.stringify(defaultValue, null, 2) : ''}
 							onChange={() => handleChange(paramName)}
+							ref={
+								shouldAttachRef
+									? (firstInputRef as React.RefObject<HTMLTextAreaElement>)
+									: undefined
+							}
 						/>
 						{description && <div className="parameter-description">{description}</div>}
 						{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
@@ -162,7 +188,9 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 
 	return (
 		<div data-testid="parameter-inputs">
-			{Object.entries(properties).map(([paramName, prop]) => renderInput(paramName, prop))}
+			{Object.entries(properties).map(([paramName, prop], index) =>
+				renderInput(paramName, prop, index === 0)
+			)}
 		</div>
 	);
 };
@@ -170,10 +198,33 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, error }) => {
 	const [validationErrors, setValidationErrors] = React.useState<{ [key: string]: string }>({});
 	const vscode = React.useMemo(() => acquireVsCodeApi(), []);
+	const firstInputRef = React.useRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+		null
+	);
 
 	// Clear validation errors when tool changes
 	React.useEffect(() => {
 		setValidationErrors({});
+	}, [tool]);
+
+	// Auto-focus first input when tool loads
+	// Note: Configuration check happens at the extension level (whether to focus this webview)
+	// The webview always auto-focuses its first input once it receives focus
+	React.useEffect(() => {
+		if (
+			tool &&
+			tool.inputSchema?.properties &&
+			Object.keys(tool.inputSchema.properties).length > 0
+		) {
+			// Use setTimeout to ensure DOM is ready after React commits updates
+			const timer = setTimeout(() => {
+				if (firstInputRef.current) {
+					firstInputRef.current.focus();
+				}
+			}, 0);
+
+			return () => clearTimeout(timer);
+		}
 	}, [tool]);
 
 	const collectParameters = (): Record<string, unknown> => {
@@ -327,6 +378,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 						schema={tool.inputSchema as ParameterSchema}
 						validationErrors={validationErrors}
 						onInputChange={handleInputChange}
+						firstInputRef={firstInputRef}
 					/>
 				</div>
 			)}

@@ -44,6 +44,14 @@
 				"title": "Select Tool"
 			},
 			{
+				"command": "mcp.focusDetail",
+				"title": "Focus Tool Detail View"
+			},
+			{
+				"command": "mcp.focusTree",
+				"title": "Focus Tool Tree View"
+			},
+			{
 				"command": "mcp.findTools",
 				"title": "MCP: Find Tools",
 				"icon": "$(filter)"
@@ -65,6 +73,21 @@
 				"command": "mcp.clearFilter",
 				"key": "escape",
 				"when": "focusedView == mcpToolTree && mcp.filterActive"
+			},
+			{
+				"command": "mcp.focusDetail",
+				"key": "enter",
+				"when": "focusedView == mcpToolTree && mcp.toolSelected"
+			},
+			{
+				"command": "mcp.focusDetail",
+				"key": "tab",
+				"when": "focusedView == mcpToolTree && mcp.toolSelected"
+			},
+			{
+				"command": "mcp.focusTree",
+				"key": "shift+tab",
+				"when": "focusedView == mcpToolDetail"
 			}
 		],
 		"menus": {
@@ -80,6 +103,16 @@
 					"group": "navigation"
 				}
 			]
+		},
+		"configuration": {
+			"title": "MCP",
+			"properties": {
+				"mcp.autoFocusFirstInput": {
+					"type": "boolean",
+					"default": true,
+					"description": "Automatically focus the first input field when a tool is selected"
+				}
+			}
 		}
 	},
 	"scripts": {
