@@ -236,20 +236,6 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
-	// Register focus detail command
-	context.subscriptions.push(
-		vscode.commands.registerCommand('mcp.focusDetail', async () => {
-			await vscode.commands.executeCommand('mcpToolDetail.focus');
-		})
-	);
-
-	// Register focus tree command (for navigating back from webview)
-	context.subscriptions.push(
-		vscode.commands.registerCommand('mcp.focusTree', async () => {
-			await vscode.commands.executeCommand('mcpToolTree.focus');
-		})
-	);
-
 	// Fetch and refresh tree with tools
 	getGroupedTools()
 		.then((tools) => {

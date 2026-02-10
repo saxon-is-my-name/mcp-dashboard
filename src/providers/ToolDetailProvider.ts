@@ -168,11 +168,6 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 			loading: true,
 		});
 
-		// For now, we already have the full tool details (inputSchema)
-		// In a real implementation, we might fetch additional details here
-		// Simulate async fetch with a small delay
-		await new Promise((resolve) => setTimeout(resolve, 100));
-
 		// Send final tool details
 		this._view.webview.postMessage({
 			type: 'toolDetailUpdate',

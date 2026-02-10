@@ -44,14 +44,6 @@
 				"title": "Select Tool"
 			},
 			{
-				"command": "mcp.focusDetail",
-				"title": "Focus Tool Detail View"
-			},
-			{
-				"command": "mcp.focusTree",
-				"title": "Focus Tool Tree View"
-			},
-			{
 				"command": "mcp.findTools",
 				"title": "MCP: Find Tools",
 				"icon": "$(filter)"
@@ -75,17 +67,17 @@
 				"when": "focusedView == mcpToolTree && mcp.filterActive"
 			},
 			{
-				"command": "mcp.focusDetail",
+				"command": "mcpToolDetail.focus",
 				"key": "enter",
 				"when": "focusedView == mcpToolTree && mcp.toolSelected"
 			},
 			{
-				"command": "mcp.focusDetail",
+				"command": "mcpToolDetail.focus",
 				"key": "tab",
 				"when": "focusedView == mcpToolTree && mcp.toolSelected"
 			},
 			{
-				"command": "mcp.focusTree",
+				"command": "mcpToolTree.focus",
 				"key": "shift+tab",
 				"when": "focusedView == mcpToolDetail"
 			}

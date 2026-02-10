@@ -9,25 +9,6 @@ describe('Keyboard Navigation - Phase 1', () => {
 		await extension.activate();
 	});
 
-	describe('mcp.focusDetail command', () => {
-		it('should be registered', async () => {
-			const commands = await vscode.commands.getCommands(true);
-			assert.ok(
-				commands.includes('mcp.focusDetail'),
-				'mcp.focusDetail command should be registered'
-			);
-		});
-
-		it('should execute without error', async () => {
-			// Execute the command - it delegates to mcpToolDetail.focus
-			// We can't verify the webview was focused, but we can ensure it doesn't throw
-			await assert.doesNotReject(
-				async () => await vscode.commands.executeCommand('mcp.focusDetail'),
-				'Command should execute without error'
-			);
-		});
-	});
-
 	describe('mcp.toolSelected context key', () => {
 		it('should update coordination service state when tool is selected', async () => {
 			const extExports = extension.exports;
@@ -82,30 +63,6 @@ describe('Keyboard Navigation - Phase 1', () => {
 	});
 
 	describe('keybindings', () => {
-		it('should register Enter key binding for mcp.focusDetail', async () => {
-			// Verify command exists (keybindings are validated at extension activation)
-			const commands = await vscode.commands.getCommands(true);
-			assert.ok(
-				commands.includes('mcp.focusDetail'),
-				'mcp.focusDetail command should be registered for Enter keybinding'
-			);
-
-			// Note: We can't simulate keypresses in integration tests, but the keybinding
-			// is declared in package.json with when clause: focusedView == mcpToolTree && mcp.toolSelected
-		});
-
-		it('should register Tab key binding for mcp.focusDetail', async () => {
-			// Verify command exists (keybindings are validated at extension activation)
-			const commands = await vscode.commands.getCommands(true);
-			assert.ok(
-				commands.includes('mcp.focusDetail'),
-				'mcp.focusDetail command should be registered for Tab keybinding'
-			);
-
-			// Note: We can't simulate keypresses in integration tests, but the keybinding
-			// is declared in package.json with when clause: focusedView == mcpToolTree && mcp.toolSelected
-		});
-
 		it('should have both keybindings use same mcp.toolSelected context', async () => {
 			// This verifies the coordination between the command and context keys
 			// by checking that selecting a tool actually updates the coordination service
