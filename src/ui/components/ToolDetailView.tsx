@@ -329,8 +329,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 		// Send execute command to extension
 		vscode.postMessage({
 			type: 'executeCommand',
-			server: tool.server,
-			command: tool.name,
+			tool: tool,
 			parameters: params,
 		});
 	};

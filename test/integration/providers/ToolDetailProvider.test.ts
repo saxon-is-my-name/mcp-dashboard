@@ -2,12 +2,12 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { ToolDetailProvider } from '../../../src/providers/ToolDetailProvider';
-import { ToolCoordinationService } from '../../../src/services/ToolCoordinationService';
+import { TIM } from '../../../src/services/TIM';
 import { ParsedMCPTool } from '../../../src/types/mcpTool';
 
 describe('ToolDetailProvider', () => {
 	let provider: ToolDetailProvider;
-	let coordinationService: ToolCoordinationService;
+	let tim: TIM;
 	let mockContext: vscode.ExtensionContext;
 	let workspaceState: Map<string, unknown>;
 	let mockWebviewView: vscode.WebviewView;
@@ -57,8 +57,13 @@ describe('ToolDetailProvider', () => {
 			},
 		} as unknown as vscode.ExtensionContext;
 
-		coordinationService = new ToolCoordinationService(mockContext);
-		provider = new ToolDetailProvider(mockContext.extensionUri, mockContext, coordinationService);
+		tim = new TIM(mockContext);
+		provider = new ToolDetailProvider(
+			mockContext.extensionUri,
+			mockContext,
+			tim.onSelectionChanged,
+			tim.useTool
+		);
 	});
 
 	afterEach(() => {
@@ -167,9 +172,23 @@ describe('ToolDetailProvider', () => {
 	describe('handleExecuteCommand', () => {
 		let createPanelStub: sinon.SinonStub;
 		let mockOutputPanel: any;
-		let invokeLmToolStub: sinon.SinonStub;
+		let mockInvokeTool: sinon.SinonStub;
 
 		beforeEach(() => {
+			// Create a new provider with a mocked invokeTool function
+			mockInvokeTool = sandbox.stub().resolves({
+				success: true,
+				data: { result: 'Test result' },
+				toolName: 'test_server_test_tool',
+			});
+
+			provider = new ToolDetailProvider(
+				mockContext.extensionUri,
+				mockContext,
+				tim.onSelectionChanged,
+				mockInvokeTool
+			);
+
 			provider.resolveWebviewView(
 				mockWebviewView,
 				{} as vscode.WebviewViewResolveContext,
@@ -191,31 +210,20 @@ describe('ToolDetailProvider', () => {
 			};
 
 			createPanelStub = sandbox.stub(vscode.window, 'createWebviewPanel').returns(mockOutputPanel);
-
-			// Mock vscode.lm.invokeTool
-			invokeLmToolStub = sandbox.stub();
-			invokeLmToolStub.resolves({
-				content: [{ type: 'text', text: 'Test result' }],
-			});
-
-			// Mock vscode.lm with proper getter
-			const mockTools = [
-				{
-					name: 'test_server_test_tool',
-					description: 'Test tool',
-				},
-			];
-
-			// Stub the property getter for tools
-			sandbox.stub(vscode.lm, 'tools').get(() => mockTools);
-			(vscode.lm as any).invokeTool = invokeLmToolStub;
 		});
 
-		it('should execute tool via vscode.lm.invokeTool', async () => {
+		it('should invoke tool with correct parameters', async () => {
+			const mockTool: ParsedMCPTool = {
+				fullName: 'test_server_test_tool',
+				name: 'test_tool',
+				description: 'Test tool',
+				server: 'test_server',
+				inputSchema: { type: 'object', properties: {} },
+			};
+
 			const message = {
 				type: 'executeCommand',
-				server: 'test_server',
-				command: 'test_tool',
+				tool: mockTool,
 				parameters: { param1: 'value1' },
 			};
 
@@ -226,15 +234,23 @@ describe('ToolDetailProvider', () => {
 			// Give time for async execution
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			assert.ok(invokeLmToolStub.called, 'invokeTool should be called');
-			assert.strictEqual(invokeLmToolStub.getCall(0).args[0], 'test_server_test_tool');
+			assert.ok(mockInvokeTool.called, 'invokeTool should be called');
+			assert.deepStrictEqual(mockInvokeTool.getCall(0).args[0], mockTool);
+			assert.deepStrictEqual(mockInvokeTool.getCall(0).args[1], { param1: 'value1' });
 		});
 
 		it('should create output panel when executing command', async () => {
+			const mockTool: ParsedMCPTool = {
+				fullName: 'test_server_test_tool',
+				name: 'test_tool',
+				description: 'Test tool',
+				server: 'test_server',
+				inputSchema: { type: 'object', properties: {} },
+			};
+
 			const message = {
 				type: 'executeCommand',
-				server: 'test_server',
-				command: 'test_tool',
+				tool: mockTool,
 				parameters: {},
 			};
 
@@ -255,10 +271,17 @@ describe('ToolDetailProvider', () => {
 		});
 
 		it('should send result to output panel', async () => {
+			const mockTool: ParsedMCPTool = {
+				fullName: 'test_server_test_tool',
+				name: 'test_tool',
+				description: 'Test tool',
+				server: 'test_server',
+				inputSchema: { type: 'object', properties: {} },
+			};
+
 			const message = {
 				type: 'executeCommand',
-				server: 'test_server',
-				command: 'test_tool',
+				tool: mockTool,
 				parameters: {},
 			};
 
@@ -281,6 +304,43 @@ describe('ToolDetailProvider', () => {
 			assert.ok(resultCall, 'Should send result message');
 			assert.strictEqual(resultCall.args[0].server, 'test_server');
 			assert.strictEqual(resultCall.args[0].command, 'test_tool');
+		});
+
+		it('should handle tool invocation errors', async () => {
+			// Mock invokeTool to return an error
+			mockInvokeTool.resolves({
+				success: false,
+				error: 'Tool execution failed',
+				toolName: 'test_server_test_tool',
+			});
+
+			const mockTool: ParsedMCPTool = {
+				fullName: 'test_server_test_tool',
+				name: 'test_tool',
+				description: 'Test tool',
+				server: 'test_server',
+				inputSchema: { type: 'object', properties: {} },
+			};
+
+			const message = {
+				type: 'executeCommand',
+				tool: mockTool,
+				parameters: {},
+			};
+
+			if (messageHandler) {
+				await messageHandler(message);
+			}
+
+			// Give time for async execution
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Should still send result to output panel (with error)
+			const calls = (mockOutputPanel.webview.postMessage as sinon.SinonStub).getCalls();
+			const resultCall = calls.find((call: sinon.SinonSpyCall) => call.args[0].type === 'result');
+
+			assert.ok(resultCall, 'Should send error result');
+			assert.ok(resultCall.args[0].result.error, 'Result should contain error');
 		});
 	});
 
@@ -307,9 +367,23 @@ describe('ToolDetailProvider', () => {
 	describe('disposal', () => {
 		let createPanelStub: sinon.SinonStub;
 		let mockOutputPanel: any;
-		let invokeLmToolStub: sinon.SinonStub;
+		let mockInvokeTool: sinon.SinonStub;
 
 		beforeEach(() => {
+			// Create a new provider with a mocked invokeTool function
+			mockInvokeTool = sandbox.stub().resolves({
+				success: true,
+				data: { result: 'Test result' },
+				toolName: 'test_server_test_tool',
+			});
+
+			provider = new ToolDetailProvider(
+				mockContext.extensionUri,
+				mockContext,
+				tim.onSelectionChanged,
+				mockInvokeTool
+			);
+
 			provider.resolveWebviewView(
 				mockWebviewView,
 				{} as vscode.WebviewViewResolveContext,
@@ -332,31 +406,21 @@ describe('ToolDetailProvider', () => {
 			};
 
 			createPanelStub = sandbox.stub(vscode.window, 'createWebviewPanel').returns(mockOutputPanel);
-
-			// Mock vscode.lm.invokeTool
-			invokeLmToolStub = sandbox.stub();
-			invokeLmToolStub.resolves({
-				content: [{ type: 'text', text: 'Test result' }],
-			});
-
-			// Mock vscode.lm with proper getter
-			const mockTools = [
-				{
-					name: 'test_server_test_tool',
-					description: 'Test tool',
-				},
-			];
-
-			sandbox.stub(vscode.lm, 'tools').get(() => mockTools);
-			(vscode.lm as any).invokeTool = invokeLmToolStub;
 		});
 
 		it('should dispose of subscription and output panel', async () => {
 			// Create output panel by executing a command
+			const mockTool: ParsedMCPTool = {
+				fullName: 'test_server_test_tool',
+				name: 'test_tool',
+				description: 'Test tool',
+				server: 'test_server',
+				inputSchema: { type: 'object', properties: {} },
+			};
+
 			const message = {
 				type: 'executeCommand',
-				server: 'test_server',
-				command: 'test_tool',
+				tool: mockTool,
 				parameters: {},
 			};
 

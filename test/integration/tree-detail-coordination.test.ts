@@ -1,12 +1,12 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { ToolCoordinationService } from '../../src/services/ToolCoordinationService';
+import { TIM } from '../../src/services/TIM';
 import { ToolTreeProvider } from '../../src/providers/ToolTreeProvider';
 import { ToolDetailProvider } from '../../src/providers/ToolDetailProvider';
 import { ParsedMCPTool, GroupedMCPTools } from '../../src/types/mcpTool';
 
 describe('Tree-Detail Coordination Integration', () => {
-	let coordinationService: ToolCoordinationService;
+	let tim: TIM;
 	let treeProvider: ToolTreeProvider;
 	let detailProvider: ToolDetailProvider;
 
@@ -45,7 +45,7 @@ describe('Tree-Detail Coordination Integration', () => {
 		await ext!.activate();
 
 		const extExports = ext!.exports;
-		coordinationService = extExports.getCoordinationService();
+		tim = extExports.getTIM();
 		treeProvider = extExports.getTreeProvider();
 		detailProvider = extExports.getDetailProvider();
 
@@ -53,9 +53,9 @@ describe('Tree-Detail Coordination Integration', () => {
 		treeProvider.refresh(mockTools);
 	});
 
-	it('ToolTreeProvider selection updates coordination service', async () => {
+	it('ToolTreeProvider selection updates tim', async () => {
 		// Clear any previous selection
-		coordinationService.selectTool(mockTool2);
+		tim.selectTool(mockTool2);
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		// Simulate tree item selection via command
@@ -65,13 +65,13 @@ describe('Tree-Detail Coordination Integration', () => {
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		// Verify tool was selected
-		const selected = coordinationService.getSelectedTool();
+		const selected = tim.getSelectedTool();
 		assert.ok(selected, 'Tool should be selected');
 		assert.strictEqual(selected?.fullName, mockTool1.fullName);
 		assert.strictEqual(selected?.name, mockTool1.name);
 	});
 
-	it('ToolDetailProvider receives updated tool from coordination service', async () => {
+	it('ToolDetailProvider receives updated tool from tim', async () => {
 		let receivedTool: ParsedMCPTool | undefined;
 
 		// Mock showToolDetail to capture what tool is shown
@@ -81,8 +81,8 @@ describe('Tree-Detail Coordination Integration', () => {
 			return originalShowToolDetail(tool);
 		};
 
-		// Select a tool via coordination service
-		coordinationService.selectTool(mockTool1);
+		// Select a tool via tim
+		tim.selectTool(mockTool1);
 
 		// Wait a bit for async updates
 		await new Promise((resolve) => setTimeout(resolve, 100));
@@ -135,32 +135,32 @@ describe('Tree-Detail Coordination Integration', () => {
 		assert.ok(shownTools.length >= 3, 'All selections should be processed');
 
 		// The last selection should be mockTool3
-		const lastSelection = coordinationService.getSelectedTool();
+		const lastSelection = tim.getSelectedTool();
 		assert.strictEqual(lastSelection, mockTool3);
 	});
 
 	it('Selected tool is restored after VS Code restart', async () => {
-		// Select a tool using the real coordination service
-		coordinationService.selectTool(mockTool1);
+		// Select a tool using the real tim
+		tim.selectTool(mockTool1);
 
 		// Wait for persistence to complete
 		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		// Get the extension context to access its workspace state
 		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
-		const extContext = (ext!.exports.getCoordinationService() as any)._context;
+		const extContext = (ext!.exports.getTIM() as any)._context;
 
 		// Create new service instance with the same context (simulating VS Code restart)
-		const newCoordinationService = new ToolCoordinationService(extContext);
+		const newTim = new TIM(extContext);
 
 		// Verify tool was restored from workspace state
-		const restored = newCoordinationService.getSelectedTool();
+		const restored = newTim.getSelectedTool();
 		assert.ok(restored, 'Tool should be restored');
 		assert.strictEqual(restored?.fullName, mockTool1.fullName);
 		assert.strictEqual(restored?.name, mockTool1.name);
 
 		// Clean up
-		newCoordinationService.dispose();
+		newTim.dispose();
 	});
 
 	it('ToolTreeProvider command is registered', async () => {

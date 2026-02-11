@@ -10,9 +10,9 @@ describe('Keyboard Navigation - Phase 1', () => {
 	});
 
 	describe('mcp.toolSelected context key', () => {
-		it('should update coordination service state when tool is selected', async () => {
+		it('should update TIM state when tool is selected', async () => {
 			const extExports = extension.exports;
-			const coordinationService = extExports.getCoordinationService();
+			const tim = extExports.getTIM();
 
 			// Create a mock tool
 			const mockTool = {
@@ -22,15 +22,15 @@ describe('Keyboard Navigation - Phase 1', () => {
 				fullName: 'test_server_test_tool',
 			};
 
-			// Select a tool (this should set the context key and update coordination service)
+			// Select a tool (this should set the context key and update TIM)
 			await vscode.commands.executeCommand('mcp.selectTool', mockTool);
 
 			// Give some time for context to be set
 			await new Promise((resolve) => setTimeout(resolve, 50));
 
-			// Verify coordination service has the selected tool
-			const selectedTool = coordinationService.getSelectedTool();
-			assert.ok(selectedTool, 'Coordination service should have selected tool');
+			// Verify TIM has the selected tool
+			const selectedTool = tim.getSelectedTool();
+			assert.ok(selectedTool, 'TIM should have selected tool');
 			assert.strictEqual(selectedTool.fullName, mockTool.fullName, 'Selected tool should match');
 		});
 	});
@@ -38,9 +38,9 @@ describe('Keyboard Navigation - Phase 1', () => {
 	describe('keybindings', () => {
 		it('should have both keybindings use same mcp.toolSelected context', async () => {
 			// This verifies the coordination between the command and context keys
-			// by checking that selecting a tool actually updates the coordination service
+			// by checking that selecting a tool actually updates the TIM
 			const extExports = extension.exports;
-			const coordinationService = extExports.getCoordinationService();
+			const tim = extExports.getTIM();
 
 			const mockTool = {
 				name: 'test_tool',
@@ -54,8 +54,8 @@ describe('Keyboard Navigation - Phase 1', () => {
 			await new Promise((resolve) => setTimeout(resolve, 50));
 
 			// Both Enter and Tab keybindings should now be enabled (when tree is focused)
-			// Verify by checking coordination service state
-			const selectedTool = coordinationService.getSelectedTool();
+			// Verify by checking TIM state
+			const selectedTool = tim.getSelectedTool();
 			assert.ok(selectedTool, 'Tool should be selected, enabling keybindings');
 		});
 	});

@@ -263,11 +263,8 @@ describe('ToolDetailView', () => {
 
 			expect(mockVscode.postMessage).toHaveBeenCalledWith({
 				type: 'executeCommand',
-				server: 'test_server',
-				command: 'test_tool',
-				parameters: {
-					param1: 'test_value',
-				},
+				tool: mockTool,
+				parameters: { param1: 'test_value' },
 			});
 		});
 

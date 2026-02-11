@@ -6,8 +6,7 @@ import { ParsedMCPTool } from './mcpTool';
 export type WebviewToExtensionMessage =
 	| {
 			type: 'executeCommand';
-			server: string;
-			command: string;
+			tool: ParsedMCPTool;
 			parameters?: Record<string, unknown>;
 	  }
 	| {
