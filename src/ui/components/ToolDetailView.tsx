@@ -371,7 +371,7 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({
 		<div>
 			<div className="tool-header">
 				<div className="tool-name">{tool.name}</div>
-				<div className="tool-server">{tool.server}</div>
+				<div className="tool-fullName">{tool.fullName}</div>
 				{tool.description && <div className="tool-description">{tool.description}</div>}
 			</div>
 

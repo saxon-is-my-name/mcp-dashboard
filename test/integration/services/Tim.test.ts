@@ -162,6 +162,72 @@ describe('TIM', () => {
 			assert.ok(grouped, 'Should return empty object');
 			assert.strictEqual(Object.keys(grouped).length, 0);
 		});
+
+		it('should drop mcp prefix from server names', async () => {
+			const mockLmTools = [
+				{ name: 'mcp_github_pull_request', description: 'GitHub PR tool' },
+				{ name: 'mcp_github_issue', description: 'GitHub issue tool' },
+			];
+
+			sandbox.stub(vscode.lm, 'tools').get(() => mockLmTools);
+
+			const grouped = await service.getTools();
+
+			assert.ok(grouped.github, 'Should have github group');
+			assert.strictEqual(grouped.github.length, 2);
+			assert.strictEqual(grouped.github[0].server, 'github');
+			assert.strictEqual(grouped.github[0].name, 'pull_request');
+		});
+
+		it('should handle TLD in server names', async () => {
+			const mockLmTools = [
+				{ name: 'mcp_com_atlassian_search', description: 'Atlassian search' },
+				{ name: 'mcp_com_atlassian_fetch', description: 'Atlassian fetch' },
+			];
+
+			sandbox.stub(vscode.lm, 'tools').get(() => mockLmTools);
+
+			const grouped = await service.getTools();
+
+			assert.ok(grouped['atlassian.com'], 'Should have atlassian.com group');
+			assert.strictEqual(grouped['atlassian.com'].length, 2);
+			assert.strictEqual(grouped['atlassian.com'][0].server, 'atlassian.com');
+			assert.strictEqual(grouped['atlassian.com'][0].name, 'search');
+		});
+
+		it('should add common prefix to server names when all tools share it', async () => {
+			const mockLmTools = [
+				{ name: 'mcp_com_atlassian_jira_search', description: 'Jira search' },
+				{ name: 'mcp_com_atlassian_jira_create', description: 'Jira create' },
+				{ name: 'mcp_com_atlassian_jira_update', description: 'Jira update' },
+			];
+
+			sandbox.stub(vscode.lm, 'tools').get(() => mockLmTools);
+
+			const grouped = await service.getTools();
+
+			assert.ok(grouped['atlassian.com.jira'], 'Should have atlassian.com.jira group');
+			assert.strictEqual(grouped['atlassian.com.jira'].length, 3);
+			assert.strictEqual(grouped['atlassian.com.jira'][0].server, 'atlassian.com.jira');
+			assert.strictEqual(grouped['atlassian.com.jira'][0].name, 'search');
+			assert.strictEqual(grouped['atlassian.com.jira'][1].name, 'create');
+		});
+
+		it('should not add prefix when tools do not share common prefix', async () => {
+			const mockLmTools = [
+				{ name: 'mcp_github_pull_request', description: 'GitHub PR tool' },
+				{ name: 'mcp_github_issue', description: 'GitHub issue tool' },
+			];
+
+			sandbox.stub(vscode.lm, 'tools').get(() => mockLmTools);
+
+			const grouped = await service.getTools();
+
+			assert.ok(grouped.github, 'Should have github group without prefix');
+			assert.strictEqual(grouped.github[0].server, 'github');
+			assert.strictEqual(grouped.github[0].name, 'pull_request');
+			assert.strictEqual(grouped.github[1].name, 'issue');
+		});
 	});
 
 	describe('Tool Invocation', () => {
