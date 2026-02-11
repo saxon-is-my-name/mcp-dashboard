@@ -108,6 +108,14 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		tool: ParsedMCPTool,
 		parameters: Record<string, unknown> = {}
 	) {
+		// Notify webview that execution is starting
+		if (this._view) {
+			this._view.webview.postMessage({
+				type: 'executionStateUpdate',
+				executing: true,
+			});
+		}
+
 		// Create or show output panel
 		if (!this._outputPanel) {
 			this._outputPanel = vscode.window.createWebviewPanel(
@@ -143,6 +151,14 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		});
 
 		const result = await this.invokeTool(tool, parameters);
+
+		// Notify webview that execution is complete
+		if (this._view) {
+			this._view.webview.postMessage({
+				type: 'executionStateUpdate',
+				executing: false,
+			});
+		}
 
 		// Format the result
 		const formattedOutput = JSON.stringify(result, null, 2);

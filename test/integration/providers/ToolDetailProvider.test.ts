@@ -342,6 +342,50 @@ describe('ToolDetailProvider', () => {
 			assert.ok(resultCall, 'Should send error result');
 			assert.ok(resultCall.args[0].result.error, 'Result should contain error');
 		});
+
+		it('should send execution state updates to detail view', async () => {
+			const mockTool: ParsedMCPTool = {
+				fullName: 'test_server_test_tool',
+				name: 'test_tool',
+				description: 'Test tool',
+				server: 'test_server',
+				inputSchema: { type: 'object', properties: {} },
+			};
+
+			const message = {
+				type: 'executeCommand',
+				tool: mockTool,
+				parameters: {},
+			};
+
+			(mockWebview.postMessage as sinon.SinonStub).resetHistory();
+
+			if (messageHandler) {
+				await messageHandler(message);
+			}
+
+			// Give time for async execution
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Should send execution state messages to the detail view
+			const calls = (mockWebview.postMessage as sinon.SinonStub).getCalls();
+			const stateMessages = calls
+				.filter((call: sinon.SinonSpyCall) => call.args[0].type === 'executionStateUpdate')
+				.map((call: sinon.SinonSpyCall) => call.args[0]);
+
+			// Should send executing: true at start and executing: false at end
+			assert.strictEqual(stateMessages.length, 2, 'Should send two execution state messages');
+			assert.strictEqual(
+				stateMessages[0].executing,
+				true,
+				'First message should be executing: true'
+			);
+			assert.strictEqual(
+				stateMessages[1].executing,
+				false,
+				'Second message should be executing: false'
+			);
+		});
 	});
 
 	describe('empty selection state', () => {

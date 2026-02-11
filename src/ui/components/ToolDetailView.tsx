@@ -10,6 +10,7 @@ declare const acquireVsCodeApi: () => {
 interface ToolDetailViewProps {
 	tool?: ParsedMCPTool;
 	loading?: boolean;
+	executing?: boolean;
 	error?: string;
 }
 
@@ -167,7 +168,12 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 	);
 };
 
-const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, error }) => {
+const ToolDetailView: React.FC<ToolDetailViewProps> = ({
+	tool,
+	loading = false,
+	executing = false,
+	error,
+}) => {
 	const [validationErrors, setValidationErrors] = React.useState<{ [key: string]: string }>({});
 	const vscode = React.useMemo(() => acquireVsCodeApi(), []);
 
@@ -380,7 +386,9 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, loading = false, 
 				</div>
 			)}
 
-			<button onClick={handleExecute}>Execute</button>
+			<button onClick={handleExecute} disabled={executing}>
+				{executing ? 'Executing...' : 'Execute'}
+			</button>
 		</div>
 	);
 };
