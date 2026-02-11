@@ -66,6 +66,18 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
+	// Register refresh tools command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('mcp.refreshTools', async () => {
+			try {
+				const tools = await tim.getTools();
+				treeProvider.refresh(tools);
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to refresh tools: ${error}`);
+			}
+		})
+	);
+
 	// Fetch and refresh tree with tools
 	tim
 		.getTools()

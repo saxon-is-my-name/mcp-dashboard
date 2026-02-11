@@ -48,6 +48,11 @@
 				"command": "mcp.clearFilter",
 				"title": "MCP: Clear Filter",
 				"icon": "$(clear-all)"
+			},
+			{
+				"command": "mcp.refreshTools",
+				"title": "MCP: Refresh Tools",
+				"icon": "$(refresh)"
 			}
 		],
 		"keybindings": [
@@ -76,14 +81,19 @@
 		"menus": {
 			"view/title": [
 				{
+					"command": "mcp.refreshTools",
+					"when": "view == mcpToolTree",
+					"group": "navigation@1"
+				},
+				{
 					"command": "mcp.findTools",
 					"when": "view == mcpToolTree",
-					"group": "navigation"
+					"group": "navigation@2"
 				},
 				{
 					"command": "mcp.clearFilter",
 					"when": "view == mcpToolTree && mcp.filterActive",
-					"group": "navigation"
+					"group": "navigation@3"
 				}
 			]
 		},

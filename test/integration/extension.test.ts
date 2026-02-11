@@ -80,4 +80,21 @@ describe('Provider Registration', () => {
 		assert.ok(tim1.onSelectionChanged, 'TIM should have onSelectionChanged event');
 		assert.ok(tim1.useTool, 'TIM should have useTool method');
 	});
+
+	it('should register mcp.refreshTools command', async () => {
+		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		await ext!.activate();
+
+		const treeProvider = ext!.exports.getTreeProvider();
+
+		// Execute refresh command
+		await vscode.commands.executeCommand('mcp.refreshTools');
+
+		// Wait for async refresh
+		await new Promise((resolve) => setTimeout(resolve, 100));
+
+		// Verify tree can still be queried (refresh didn't break it)
+		const children = await treeProvider.getChildren();
+		assert.ok(Array.isArray(children), 'Tree should still work after refresh');
+	});
 });
