@@ -7,7 +7,7 @@ import { ParsedMCPTool } from '../types/mcpTool';
  */
 export class ToolCoordinationService {
 	private _selectedTool: ParsedMCPTool | undefined;
-	private _onSelectionChanged = new vscode.EventEmitter<ParsedMCPTool | undefined>();
+	private _onSelectionChanged = new vscode.EventEmitter<ParsedMCPTool>();
 
 	/**
 	 * Event fired when the selected tool changes
@@ -28,13 +28,13 @@ export class ToolCoordinationService {
 
 	/**
 	 * Select a tool and notify listeners
-	 * @param tool The tool to select, or undefined to clear selection
+	 * @param tool The tool that user has selected
 	 */
-	selectTool(tool: ParsedMCPTool | undefined): void {
+	selectTool(tool: ParsedMCPTool): void {
 		this._selectedTool = tool;
 
 		// Set context key for keyboard navigation
-		vscode.commands.executeCommand('setContext', 'mcp.toolSelected', !!tool);
+		vscode.commands.executeCommand('setContext', 'mcp.toolSelected', true);
 
 		// Persist to workspace state asynchronously
 		this._persistSelection(tool);

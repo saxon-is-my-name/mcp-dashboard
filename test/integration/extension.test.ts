@@ -273,7 +273,7 @@ describe('Phase 4: TreeView and Detail Provider Registration', () => {
 
 		// Try to execute the command - should not throw
 		try {
-			await vscode.commands.executeCommand('mcp.selectTool', undefined);
+			await vscode.commands.executeCommand('mcp.selectTool', {});
 			assert.ok(true, 'Command executed without error');
 		} catch (error) {
 			assert.fail('Command should be registered');

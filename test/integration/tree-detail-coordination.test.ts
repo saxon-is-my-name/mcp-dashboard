@@ -27,8 +27,16 @@ describe('Tree-Detail Coordination Integration', () => {
 		inputSchema: { type: 'object', properties: {} },
 	};
 
+	const mockTool3: ParsedMCPTool = {
+		fullName: 'test_tool3',
+		name: 'tool3',
+		description: 'Test tool 3',
+		server: 'test',
+		inputSchema: { type: 'object', properties: {} },
+	};
+
 	const mockTools: GroupedMCPTools = {
-		server1: [mockTool1, mockTool2],
+		server1: [mockTool1, mockTool2, mockTool3],
 	};
 
 	beforeEach(async () => {
@@ -45,15 +53,9 @@ describe('Tree-Detail Coordination Integration', () => {
 		treeProvider.refresh(mockTools);
 	});
 
-	afterEach(() => {
-		// Don't dispose providers since they're owned by the extension
-		// Just clear the selection
-		coordinationService.selectTool(undefined);
-	});
-
 	it('ToolTreeProvider selection updates coordination service', async () => {
 		// Clear any previous selection
-		coordinationService.selectTool(undefined);
+		coordinationService.selectTool(mockTool2);
 		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		// Simulate tree item selection via command
@@ -112,11 +114,11 @@ describe('Tree-Detail Coordination Integration', () => {
 	});
 
 	it('Rapid selection changes are handled correctly', async () => {
-		const shownTools: (ParsedMCPTool | undefined)[] = [];
+		const shownTools: ParsedMCPTool[] = [];
 
 		// Mock showToolDetail to track all calls
 		const originalShowToolDetail = detailProvider.showToolDetail.bind(detailProvider);
-		detailProvider.showToolDetail = async (tool?: ParsedMCPTool) => {
+		detailProvider.showToolDetail = async (tool: ParsedMCPTool) => {
 			shownTools.push(tool);
 			return originalShowToolDetail(tool);
 		};
@@ -124,7 +126,7 @@ describe('Tree-Detail Coordination Integration', () => {
 		// Rapid fire selections
 		await vscode.commands.executeCommand('mcp.selectTool', mockTool1);
 		await vscode.commands.executeCommand('mcp.selectTool', mockTool2);
-		await vscode.commands.executeCommand('mcp.selectTool', undefined);
+		await vscode.commands.executeCommand('mcp.selectTool', mockTool3);
 
 		// Wait for all async updates
 		await new Promise((resolve) => setTimeout(resolve, 200));
@@ -132,9 +134,9 @@ describe('Tree-Detail Coordination Integration', () => {
 		// Verify all selections were processed
 		assert.ok(shownTools.length >= 3, 'All selections should be processed');
 
-		// The last selection should be undefined
+		// The last selection should be mockTool3
 		const lastSelection = coordinationService.getSelectedTool();
-		assert.strictEqual(lastSelection, undefined);
+		assert.strictEqual(lastSelection, mockTool3);
 	});
 
 	it('Selected tool is restored after VS Code restart', async () => {
@@ -159,22 +161,6 @@ describe('Tree-Detail Coordination Integration', () => {
 
 		// Clean up
 		newCoordinationService.dispose();
-	});
-
-	it('Coordination service can clear selection', async () => {
-		// First select a tool
-		coordinationService.selectTool(mockTool1);
-		await new Promise((resolve) => setTimeout(resolve, 50));
-
-		// Verify it's selected
-		assert.ok(coordinationService.getSelectedTool(), 'Tool should be selected');
-
-		//Then clear it
-		coordinationService.selectTool(undefined);
-		await new Promise((resolve) => setTimeout(resolve, 50));
-
-		// Verify it's cleared
-		assert.strictEqual(coordinationService.getSelectedTool(), undefined);
 	});
 
 	it('ToolTreeProvider command is registered', async () => {

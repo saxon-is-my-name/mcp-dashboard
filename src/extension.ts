@@ -203,8 +203,18 @@ export function activate(context: vscode.ExtensionContext) {
 	coordinationService = new ToolCoordinationService(context);
 	context.subscriptions.push(coordinationService);
 
+	// Register commands
+	const selectToolCommandDisposable = vscode.commands.registerCommand(
+		'mcp.selectTool',
+		(tool: ParsedMCPTool) => {
+			console.log('Tool selected:', tool.name); //todo delete log
+			coordinationService.selectTool(tool);
+		}
+	);
+	context.subscriptions.push(selectToolCommandDisposable);
+
 	// Create tree provider
-	treeProvider = new ToolTreeProvider(coordinationService);
+	treeProvider = new ToolTreeProvider();
 	context.subscriptions.push(treeProvider);
 
 	// Create tree view with description support

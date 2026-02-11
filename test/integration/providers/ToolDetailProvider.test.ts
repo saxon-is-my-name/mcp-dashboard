@@ -26,14 +26,14 @@ describe('ToolDetailProvider', () => {
 		mockWebview = {
 			html: '',
 			options: {},
-			onDidReceiveMessage: sinon
+			onDidReceiveMessage: sandbox
 				.stub()
 				.callsFake((handler: (message: unknown) => Promise<void>) => {
 					messageHandler = handler;
-					return { dispose: sinon.stub() };
+					return { dispose: sandbox.stub() };
 				}),
-			postMessage: sinon.stub().resolves(true),
-			asWebviewUri: sinon.stub().callsFake((uri: vscode.Uri) => uri),
+			postMessage: sandbox.stub().resolves(true),
+			asWebviewUri: sandbox.stub().callsFake((uri: vscode.Uri) => uri),
 			cspSource: 'vscode-webview://test',
 		} as vscode.Webview;
 
@@ -41,9 +41,9 @@ describe('ToolDetailProvider', () => {
 			webview: mockWebview,
 			visible: true,
 			viewType: 'mcpToolDetail',
-			show: sinon.stub(),
-			onDidChangeVisibility: sinon.stub().returns({ dispose: sinon.stub() }),
-			onDidDispose: sinon.stub().returns({ dispose: sinon.stub() }),
+			show: sandbox.stub(),
+			onDidChangeVisibility: sandbox.stub().returns({ dispose: sandbox.stub() }),
+			onDidDispose: sandbox.stub().returns({ dispose: sandbox.stub() }),
 		} as vscode.WebviewView;
 
 		mockContext = {

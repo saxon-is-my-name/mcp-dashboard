@@ -58,21 +58,6 @@ describe('ToolCoordinationService', () => {
 		service.selectTool(mockTool2);
 	});
 
-	it('ToolCoordinationService handles null selection', (done) => {
-		// First select a tool
-		service.selectTool(mockTool);
-		assert.strictEqual(service.getSelectedTool(), mockTool);
-
-		// Then deselect (select undefined)
-		service.onSelectionChanged((tool) => {
-			assert.strictEqual(tool, undefined);
-			assert.strictEqual(service.getSelectedTool(), undefined);
-			done();
-		});
-
-		service.selectTool(undefined);
-	});
-
 	it('ToolCoordinationService persists selection to workspace state', async () => {
 		service.selectTool(mockTool);
 
@@ -114,41 +99,5 @@ describe('ToolCoordinationService', () => {
 
 		const selected = newService.getSelectedTool();
 		assert.strictEqual(selected, undefined);
-	});
-
-	it('Rapid selection changes are handled correctly', (done) => {
-		const selections: (ParsedMCPTool | undefined)[] = [];
-
-		service.onSelectionChanged((tool) => {
-			selections.push(tool);
-
-			// After 3 rapid changes, verify all were received
-			if (selections.length === 3) {
-				assert.strictEqual(selections[0], mockTool);
-				assert.strictEqual(selections[1], mockTool2);
-				assert.strictEqual(selections[2], undefined);
-				assert.strictEqual(service.getSelectedTool(), undefined);
-				done();
-			}
-		});
-
-		// Rapid fire selections
-		service.selectTool(mockTool);
-		service.selectTool(mockTool2);
-		service.selectTool(undefined);
-	});
-
-	it('ToolCoordinationService persists undefined selection', async () => {
-		// First select a tool
-		service.selectTool(mockTool);
-		await new Promise((resolve) => setTimeout(resolve, 50));
-
-		// Then deselect
-		service.selectTool(undefined);
-		await new Promise((resolve) => setTimeout(resolve, 50));
-
-		// Verify undefined is stored
-		const stored = workspaceState.get('mcp.selectedTool');
-		assert.strictEqual(stored, undefined);
 	});
 });

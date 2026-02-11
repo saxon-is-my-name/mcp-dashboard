@@ -33,33 +33,6 @@ describe('Keyboard Navigation - Phase 1', () => {
 			assert.ok(selectedTool, 'Coordination service should have selected tool');
 			assert.strictEqual(selectedTool.fullName, mockTool.fullName, 'Selected tool should match');
 		});
-
-		it('should clear coordination service state when no tool is selected', async () => {
-			const extExports = extension.exports;
-			const coordinationService = extExports.getCoordinationService();
-
-			// First select a tool
-			const mockTool = {
-				name: 'test_tool',
-				description: 'Test tool',
-				server: 'test_server',
-				fullName: 'test_server_test_tool',
-			};
-			await vscode.commands.executeCommand('mcp.selectTool', mockTool);
-			await new Promise((resolve) => setTimeout(resolve, 50));
-
-			// Now clear selection
-			await vscode.commands.executeCommand('mcp.selectTool', undefined);
-			await new Promise((resolve) => setTimeout(resolve, 50));
-
-			// Verify coordination service has no selected tool
-			const selectedTool = coordinationService.getSelectedTool();
-			assert.strictEqual(
-				selectedTool,
-				undefined,
-				'Coordination service should have no selected tool'
-			);
-		});
 	});
 
 	describe('keybindings', () => {

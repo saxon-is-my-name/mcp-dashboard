@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { GroupedMCPTools, ParsedMCPTool } from '../types/mcpTool';
 import { ServerTreeItem, ToolTreeItem } from '../types/treeItems';
-import { ToolCoordinationService } from '../services/ToolCoordinationService';
 
 /**
  * Tree data provider for displaying servers and tools in a two-level hierarchy
@@ -17,31 +16,13 @@ export class ToolTreeProvider
 	> = this._onDidChangeTreeData.event;
 
 	private tools: GroupedMCPTools = {};
-	private _commandDisposable: vscode.Disposable | undefined;
 	private filterQuery: string = '';
 	private _treeView: vscode.TreeView<ServerTreeItem | ToolTreeItem> | undefined;
-
-	constructor(private readonly coordinationService: ToolCoordinationService) {
-		// Register the command for selecting tools
-		// Wrap in try-catch to handle cases where command is already registered
-		try {
-			this._commandDisposable = vscode.commands.registerCommand('mcp.selectTool', (tool) => {
-				this.coordinationService.selectTool(tool);
-			});
-		} catch (error) {
-			// Command already registered - this is OK in test scenarios
-			console.log('mcp.selectTool command already registered');
-			this._commandDisposable = undefined;
-		}
-	}
 
 	/**
 	 * Dispose of resources
 	 */
 	dispose(): void {
-		if (this._commandDisposable) {
-			this._commandDisposable.dispose();
-		}
 		this._onDidChangeTreeData.dispose();
 	}
 

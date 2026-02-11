@@ -40,10 +40,6 @@
 		},
 		"commands": [
 			{
-				"command": "mcp.selectTool",
-				"title": "Select Tool"
-			},
-			{
 				"command": "mcp.findTools",
 				"title": "MCP: Find Tools",
 				"icon": "$(filter)"
