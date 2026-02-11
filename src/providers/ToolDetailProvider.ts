@@ -89,15 +89,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 			return;
 		}
 
-		// todo pretty sure this loading stuff is pointless
-		// Send loading state first
-		this._view.webview.postMessage({
-			type: 'toolDetailUpdate',
-			tool: tool,
-			loading: true,
-		});
-
-		// Send final tool details
+		// Send tool details
 		this._view.webview.postMessage({
 			type: 'toolDetailUpdate',
 			tool: tool,

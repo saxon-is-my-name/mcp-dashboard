@@ -145,28 +145,6 @@ describe('ToolDetailProvider', () => {
 			assert.strictEqual(lastCall.args[0].type, 'toolDetailUpdate');
 			assert.deepStrictEqual(lastCall.args[0].tool, mockTool);
 		});
-
-		it('should send loading state before fetching details', async () => {
-			const mockTool: ParsedMCPTool = {
-				name: 'test_tool',
-				description: 'Test tool description',
-				server: 'test_server',
-				fullName: 'test_server_test_tool',
-			};
-
-			await provider.showToolDetail(mockTool);
-
-			// Should call postMessage at least twice
-			assert.ok(
-				(mockWebview.postMessage as sinon.SinonStub).callCount >= 2,
-				'Should call postMessage at least twice'
-			);
-
-			// First call should have loading: true
-			const firstCall = (mockWebview.postMessage as sinon.SinonStub).getCall(0);
-			assert.strictEqual(firstCall.args[0].type, 'toolDetailUpdate');
-			assert.strictEqual(firstCall.args[0].loading, true);
-		});
 	});
 
 	describe('handleExecuteCommand', () => {

@@ -5,7 +5,6 @@ import { ParsedMCPTool } from './types/mcpTool';
 
 const App: React.FC = () => {
 	const [tool, setTool] = React.useState<ParsedMCPTool | undefined>(undefined);
-	const [loading, setLoading] = React.useState<boolean>(false);
 	const [executing, setExecuting] = React.useState<boolean>(false);
 
 	React.useEffect(() => {
@@ -16,7 +15,6 @@ const App: React.FC = () => {
 			switch (message.type) {
 				case 'toolDetailUpdate':
 					setTool(message.tool);
-					setLoading(message.loading || false);
 					break;
 				case 'executionStateUpdate':
 					setExecuting(message.executing);
@@ -31,7 +29,7 @@ const App: React.FC = () => {
 		};
 	}, []);
 
-	return <ToolDetailView tool={tool} loading={loading} executing={executing} />;
+	return <ToolDetailView tool={tool} executing={executing} />;
 };
 
 // Wait for DOM to be ready

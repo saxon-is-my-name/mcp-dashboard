@@ -23,41 +23,13 @@ beforeEach(() => {
 describe('ToolDetailView', () => {
 	describe('empty state', () => {
 		it('should show "no tool selected" message when empty', () => {
-			render(<ToolDetailView tool={undefined} loading={false} />);
+			render(<ToolDetailView tool={undefined} />);
 
 			expect(screen.getByText(/select a tool from the tree to view details/i)).toBeInTheDocument();
 		});
 
 		it('should not show execute button when empty', () => {
-			render(<ToolDetailView tool={undefined} loading={false} />);
-
-			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
-		});
-	});
-
-	describe('loading state', () => {
-		it('should show loading state while fetching details', () => {
-			const mockTool: ParsedMCPTool = {
-				name: 'test_tool',
-				description: 'Test description',
-				server: 'test_server',
-				fullName: 'test_server_test_tool',
-			};
-
-			render(<ToolDetailView tool={mockTool} loading={true} />);
-
-			expect(screen.getByText(/loading tool details/i)).toBeInTheDocument();
-		});
-
-		it('should not show execute button while loading', () => {
-			const mockTool: ParsedMCPTool = {
-				name: 'test_tool',
-				description: 'Test description',
-				server: 'test_server',
-				fullName: 'test_server_test_tool',
-			};
-
-			render(<ToolDetailView tool={mockTool} loading={true} />);
+			render(<ToolDetailView tool={undefined} />);
 
 			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
 		});
@@ -65,9 +37,7 @@ describe('ToolDetailView', () => {
 
 	describe('error state', () => {
 		it('should show error message when error prop is provided', () => {
-			render(
-				<ToolDetailView tool={undefined} loading={false} error="Failed to load tool details" />
-			);
+			render(<ToolDetailView tool={undefined} error="Failed to load tool details" />);
 
 			expect(screen.getByText(/failed to load tool details/i)).toBeInTheDocument();
 		});
@@ -80,7 +50,7 @@ describe('ToolDetailView', () => {
 				fullName: 'test_server_test_tool',
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} error="Network error" />);
+			render(<ToolDetailView tool={mockTool} error="Network error" />);
 
 			expect(screen.queryByRole('button', { name: /execute/i })).not.toBeInTheDocument();
 		});
@@ -102,20 +72,20 @@ describe('ToolDetailView', () => {
 		};
 
 		it('should render tool name and description', () => {
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			expect(screen.getByText('test_tool')).toBeInTheDocument();
 			expect(screen.getByText(/this is a test tool description/i)).toBeInTheDocument();
 		});
 
 		it('should show server name', () => {
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			expect(screen.getByText(/test_server/i)).toBeInTheDocument();
 		});
 
 		it('should show execute button when tool selected', () => {
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			expect(screen.getByRole('button', { name: /execute/i })).toBeInTheDocument();
 		});
@@ -138,7 +108,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			expect(screen.getByLabelText(/name \*/i)).toBeInTheDocument();
 			expect(screen.getByLabelText(/age/i)).toBeInTheDocument();
@@ -159,7 +129,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			expect(screen.getByLabelText(/required_param \*/i)).toBeInTheDocument();
 		});
@@ -181,7 +151,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			const textInput = screen.getByLabelText(/text_param/i) as HTMLInputElement;
 			const numInput = screen.getByLabelText(/num_param/i) as HTMLInputElement;
@@ -205,7 +175,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			expect(screen.getByRole('button', { name: /execute/i })).toBeInTheDocument();
 		});
@@ -227,7 +197,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			const executeButton = screen.getByRole('button', { name: /execute/i });
 			fireEvent.click(executeButton);
@@ -253,7 +223,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			const input = screen.getByLabelText(/param1 \*/i) as HTMLInputElement;
 			fireEvent.change(input, { target: { value: 'test_value' } });
@@ -283,7 +253,7 @@ describe('ToolDetailView', () => {
 				},
 			};
 
-			render(<ToolDetailView tool={mockTool} loading={false} />);
+			render(<ToolDetailView tool={mockTool} />);
 
 			const executeButton = screen.getByRole('button', { name: /execute/i });
 			fireEvent.click(executeButton);

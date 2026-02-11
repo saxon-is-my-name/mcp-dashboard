@@ -66,7 +66,7 @@ describe('ToolDetailView - Auto-focus First Input', () => {
 
 	describe('auto-focus behavior', () => {
 		it('should auto-focus first input when tool loads with parameters', async () => {
-			const { container } = render(<ToolDetailView tool={mockToolWithParams} loading={false} />);
+			const { container } = render(<ToolDetailView tool={mockToolWithParams} />);
 
 			// Wait for focus to be applied (with extended timeout to account for setTimeout in implementation)
 			await waitFor(
@@ -79,10 +79,10 @@ describe('ToolDetailView - Auto-focus First Input', () => {
 		});
 
 		it('should auto-focus first input when tool changes', async () => {
-			const { rerender, container } = render(<ToolDetailView tool={undefined} loading={false} />);
+			const { rerender, container } = render(<ToolDetailView tool={undefined} />);
 
 			// Change to a tool with parameters
-			rerender(<ToolDetailView tool={mockToolWithParams} loading={false} />);
+			rerender(<ToolDetailView tool={mockToolWithParams} />);
 
 			// Wait for focus to be applied
 			await waitFor(
@@ -95,7 +95,7 @@ describe('ToolDetailView - Auto-focus First Input', () => {
 		});
 
 		it('should not auto-focus when tool has no parameters', async () => {
-			const { container } = render(<ToolDetailView tool={mockToolWithoutParams} loading={false} />);
+			const { container } = render(<ToolDetailView tool={mockToolWithoutParams} />);
 
 			// Wait a bit to ensure focus doesn't happen
 			await new Promise((resolve) => setTimeout(resolve, 150));
@@ -110,21 +110,8 @@ describe('ToolDetailView - Auto-focus First Input', () => {
 	});
 
 	describe('edge cases', () => {
-		it('should not auto-focus when tool is loading', async () => {
-			const { container } = render(<ToolDetailView tool={mockToolWithParams} loading={true} />);
-
-			// Wait a bit to ensure focus doesn't happen
-			await new Promise((resolve) => setTimeout(resolve, 150));
-
-			// Loading state shown, no inputs rendered
-			expect(screen.getByText(/loading tool details/i)).toBeInTheDocument();
-			expect(container.querySelectorAll('input').length).toBe(0);
-		});
-
 		it('should not auto-focus when error is shown', async () => {
-			const { container } = render(
-				<ToolDetailView tool={mockToolWithParams} loading={false} error="Test error" />
-			);
+			const { container } = render(<ToolDetailView tool={mockToolWithParams} error="Test error" />);
 
 			// Wait a bit to ensure focus doesn't happen
 			await new Promise((resolve) => setTimeout(resolve, 150));
@@ -154,7 +141,7 @@ describe('ToolDetailView - Auto-focus First Input', () => {
 				},
 			};
 
-			const { container } = render(<ToolDetailView tool={mockToolWithEnum} loading={false} />);
+			const { container } = render(<ToolDetailView tool={mockToolWithEnum} />);
 
 			// Wait for focus to be applied to the select element
 			await waitFor(

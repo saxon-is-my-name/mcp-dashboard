@@ -19,5 +19,5 @@ export type WebviewToExtensionMessage =
 export type ExtensionToWebviewMessage =
 	| { type: 'toolsUpdate'; tools: ParsedMCPTool[] }
 	| { type: 'error'; message: string }
-	| { type: 'toolDetailUpdate'; tool?: ParsedMCPTool; loading?: boolean }
+	| { type: 'toolDetailUpdate'; tool?: ParsedMCPTool }
 	| { type: 'executionStateUpdate'; executing: boolean };

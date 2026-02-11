@@ -97,7 +97,7 @@ export class TIM {
 			if (tools.length === 0) continue;
 
 			// Find common prefix among all tool names in this server
-			const commonPrefix = this.findCommonPrefix(tools.map(t => t.name));
+			const commonPrefix = this.findCommonPrefix(tools.map((t) => t.name));
 
 			// If there's a meaningful common prefix (at least one segment), use it
 			if (commonPrefix && commonPrefix.includes('_')) {
@@ -105,7 +105,7 @@ export class TIM {
 				const newServerName = serverName + '.' + prefixPart;
 
 				// Update all tools with the new server name and strip prefix from tool names
-				refined[newServerName] = tools.map(t => ({
+				refined[newServerName] = tools.map((t) => ({
 					...t,
 					server: newServerName,
 					name: t.name.slice(commonPrefix.length), // Remove the common prefix
