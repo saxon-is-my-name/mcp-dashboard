@@ -11,10 +11,11 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 │                    VS Code Extension                    │
 │                                                         │
 │  ┌──────────────────────────────────────────────────┐  │
-│  │          ToolCoordinationService                 │  │
+│  │          TIM (Tool Interaction Manager)          │  │
 │  │  - Manages selected tool state                   │  │
 │  │  - Persists selection to workspace state         │  │
 │  │  - Notifies listeners of selection changes       │  │
+│  │  - Uses Toolbox for tool execution               │  │
 │  └──────────────────────────────────────────────────┘  │
 │              │                           │              │
 │              ▼                           ▼              │
@@ -68,7 +69,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - Implements `vscode.WebviewViewProvider` interface
 - Renders tool details in a webview panel
 - Generates HTML from templates (`src/templates/toolDetailTemplate.ts`)
-- Listens for selection changes from coordination service
+- Listens for selection changes from TIM
 - Handles tool execution requests from webview
 - Manages output panel for displaying execution results
 - Handles webview message passing
@@ -79,16 +80,20 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - **Error**: Shows error message if tool fetch fails
 - **Loaded**: Displays tool name, description, server, parameters, and execute button
 
-### ToolCoordinationService
+### TIM (Tool Interaction Manager)
 
-**Location**: `src/services/ToolCoordinationService.ts`
+**Location**: `src/services/TIM.ts`
 
 **Responsibilities**:
 - Central state management for selected tool
+- Manages tool interaction through integrated Toolbox
 - Provides `selectTool(tool)` and `getSelectedTool()` methods
-- Fires change events via `onSelectionChange` event emitter
+- Provides `useTool(tool, parameters)` for tool execution
+- Provides `getTools()` for tool discovery and grouping
+- Fires change events via `onSelectionChanged` event emitter
 - Persists selected tool to VS Code workspace state
 - Restores selection on extension activation
+- Parses tool names to extract server and tool identifiers
 - Singleton pattern ensures consistent state across providers
 
 **State Persistence**:
@@ -111,11 +116,12 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 
 1. User clicks tool in TreeView
 2. `mcp.selectTool` command is triggered with tool data
-3. Command handler calls `coordinationService.selectTool(tool)`
-4. CoordinationService:
+3. Command handler calls `tim.selectTool(tool)`
+4. TIM:
    - Updates internal state
+   - Sets `mcp.toolSelected` context key
    - Persists to workspace state
-   - Fires `onSelectionChange` event
+   - Fires `onSelectionChanged` event
 5. ToolDetailProvider receives event
 6. ToolDetailProvider sends tool data to webview
 7. React component receives message and updates UI
@@ -125,9 +131,10 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 1. User fills parameters and clicks "Execute" button in webview
 2. Webview sends `executeCommand` message to extension
 3. ToolDetailProvider receives message
-4. Provider calls `vscode.lm.invokeTool()` with parameters
-5. Result is formatted and sent to output panel webview
-6. Output panel displays formatted result
+4. Provider calls `tim.useTool(tool, parameters)`
+5. TIM delegates to Toolbox which calls `vscode.lm.invokeTool()`
+6. Result is formatted and sent to output panel webview
+7. Output panel displays formatted result
 
 ### Tool Search Flow
 
@@ -199,28 +206,28 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 The extension uses VS Code's workspace state API to persist the selected tool:
 
 ```typescript
-// Save
+// Save (in TIM)
 await context.workspaceState.update('mcp.selectedTool', tool);
 
-// Restore
+// Restore (in TIM constructor)
 const savedTool = context.workspaceState.get<ParsedMCPTool>('mcp.selectedTool');
 ```
 
 ### Session Restoration
 
 On extension activation:
-1. CoordinationService checks workspace state for saved tool
-2. If found, restores selection and notifies listeners
-3. ToolDetailProvider automatically displays restored tool
+1. TIM checks workspace state for saved tool in constructor
+2. If found, restores selection internally
+3. ToolDetailProvider can query TIM for restored selection
 4. TreeView highlights the restored selection
 
 ## Testing Strategy
 
 ### Integration Tests
 - `test/integration/tree-detail-coordination.test.ts` - Tests coordination between components
-- `test/providers/ToolTreeProvider.test.ts` - Tests tree provider logic
-- `test/providers/ToolDetailProvider.test.ts` - Tests detail provider logic
-- `test/services/ToolCoordinationService.test.ts` - Tests state management
+- `test/integration/providers/ToolTreeProvider.test.ts` - Tests tree provider logic
+- `test/integration/providers/ToolDetailProvider.test.ts` - Tests detail provider logic
+- `test/integration/services/Tim.test.ts` - Tests TIM state management and tool operations
 
 ### UI Tests
 - `test/ui/ToolDetailView.ui.test.tsx` - Tests React component rendering and validation
@@ -257,8 +264,9 @@ To customize output display:
 - **Lazy Loading**: Tools are only fetched when needed
 - **Efficient Updates**: Tree only refreshes on data changes
 - **Webview Reuse**: Webview panels are reused rather than recreated
-- **State Caching**: Selected tool is cached to avoid redundant fetches
+- **State Caching**: TIM caches selected tool to avoid redundant fetches
 - **Event Throttling**: Rapid selection changes are handled gracefully
+- **Toolbox Integration**: TIM delegates tool operations to Toolbox for efficient execution
 
 ## Future Enhancements
 
