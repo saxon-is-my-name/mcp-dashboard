@@ -207,7 +207,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const selectToolCommandDisposable = vscode.commands.registerCommand(
 		'mcp.selectTool',
 		(tool: ParsedMCPTool) => {
-			console.log('Tool selected:', tool.name); //todo delete log
 			coordinationService.selectTool(tool);
 		}
 	);
