@@ -83,9 +83,12 @@ export class Toolbox {
 	 */
 	async getTools(): Promise<MCPTool[]> {
 		try {
-			// Check if vscode.lm.tools is available (VS Code 1.109+)
+			// Check if vscode.lm.tools is available
 			if (!vscode.lm || !vscode.lm.tools) {
-				console.warn('vscode.lm.tools API not available');
+				const errorMsg =
+					'vscode.lm.tools API not available. Please ensure you are using VS Code version 1.109 or higher.';
+				console.error(errorMsg);
+				vscode.window.showWarningMessage(errorMsg);
 				return [];
 			}
 
@@ -99,7 +102,9 @@ export class Toolbox {
 				tags: tool.tags,
 			}));
 		} catch (error) {
-			console.error('Error fetching tools from vscode.lm:', error);
+			const errorMsg = `Failed to fetch MCP tools: ${error instanceof Error ? error.message : String(error)}`;
+			console.error(errorMsg, error);
+			vscode.window.showErrorMessage(errorMsg);
 			return [];
 		}
 	}
