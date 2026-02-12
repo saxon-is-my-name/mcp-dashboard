@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 import { ToolDetailProvider } from '../../src/providers/ToolDetailProvider';
+import { OutputPanelProvider } from '../../src/providers/OutputPanelProvider';
 import { TIM } from '../../src/services/TIM';
 import { ParsedMCPTool } from '../../src/types/mcpTool';
 import { ToolResult } from '../../src/types/toolResult';
@@ -12,6 +13,7 @@ import { ToolResult } from '../../src/types/toolResult';
 describe('Webview Message Passing', () => {
 	let provider: ToolDetailProvider;
 	let tim: TIM;
+	let mockOutputPanelProvider: OutputPanelProvider;
 	let mockContext: vscode.ExtensionContext;
 	let workspaceState: Map<string, unknown>;
 	let mockWebviewView: vscode.WebviewView;
@@ -68,11 +70,21 @@ describe('Webview Message Passing', () => {
 		} as unknown as vscode.ExtensionContext;
 
 		tim = new TIM(mockContext);
+
+		// Create mock OutputPanelProvider
+		mockOutputPanelProvider = {
+			showOutputPanel: sandbox.stub(),
+			sendLoadingMessage: sandbox.stub(),
+			sendResultMessage: sandbox.stub(),
+			dispose: sandbox.stub(),
+		} as unknown as OutputPanelProvider;
+
 		provider = new ToolDetailProvider(
 			mockContext.extensionUri,
 			mockContext,
 			tim.onSelectionChanged,
-			tim.useTool
+			tim.useTool,
+			mockOutputPanelProvider
 		);
 	});
 
@@ -131,7 +143,8 @@ describe('Webview Message Passing', () => {
 				mockContext.extensionUri,
 				mockContext,
 				tim.onSelectionChanged,
-				mockInvokeTool
+				mockInvokeTool,
+				mockOutputPanelProvider
 			);
 
 			provider.resolveWebviewView(
@@ -225,7 +238,8 @@ describe('Webview Message Passing', () => {
 				mockContext.extensionUri,
 				mockContext,
 				tim.onSelectionChanged,
-				mockInvokeTool
+				mockInvokeTool,
+				mockOutputPanelProvider
 			);
 
 			provider.resolveWebviewView(
@@ -246,12 +260,15 @@ describe('Webview Message Passing', () => {
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			const calls = (mockOutputPanel.webview.postMessage as sinon.SinonStub).getCalls();
-			const loadingMessage = calls.map((c) => c.args[0]).find((m) => m.type === 'loading');
+			// Verify loading message was sent via OutputPanelProvider
+			assert.ok(
+				(mockOutputPanelProvider.sendLoadingMessage as sinon.SinonStub).called,
+				'sendLoadingMessage should be called'
+			);
 
-			assert.ok(loadingMessage, 'Loading message should be sent');
-			assert.strictEqual(loadingMessage.server, mockTool.server);
-			assert.strictEqual(loadingMessage.command, mockTool.name);
+			const call = (mockOutputPanelProvider.sendLoadingMessage as sinon.SinonStub).getCall(0);
+			assert.strictEqual(call.args[0].server, mockTool.server);
+			assert.strictEqual(call.args[0].name, mockTool.name);
 		});
 
 		it('should send result message to output panel after execution', async () => {
@@ -268,53 +285,8 @@ describe('Webview Message Passing', () => {
 				mockContext.extensionUri,
 				mockContext,
 				tim.onSelectionChanged,
-				mockInvokeTool
-			);
-
-			provider.resolveWebviewView(
-				mockWebviewView,
-				{} as vscode.WebviewViewResolveContext,
-				{} as vscode.CancellationToken
-			);
-
-			const message = {
-				type: 'executeCommand',
-				tool: mockTool,
-				parameters: { param: 'value' },
-			};
-
-			if (messageHandler) {
-				await messageHandler(message);
-			}
-
-			await new Promise((resolve) => setTimeout(resolve, 100));
-
-			const calls = (mockOutputPanel.webview.postMessage as sinon.SinonStub).getCalls();
-			const resultMessage = calls.map((c) => c.args[0]).find((m) => m.type === 'result');
-
-			assert.ok(resultMessage, 'Result message should be sent');
-			assert.strictEqual(resultMessage.server, mockTool.server);
-			assert.strictEqual(resultMessage.command, mockTool.name);
-			assert.strictEqual(resultMessage.result.success, true);
-			assert.ok(resultMessage.output, 'Should include formatted output');
-			assert.ok(resultMessage.timestamp, 'Should include timestamp');
-		});
-
-		it('should send error result to output panel on execution failure', async () => {
-			const mockErrorResult: ToolResult = {
-				success: false,
-				error: 'Tool execution failed',
-				toolName: 'test_tool',
-				executionTime: 50,
-			};
-
-			const mockInvokeTool = sandbox.stub().resolves(mockErrorResult);
-
-			provider = new ToolDetailProvider(
-				mockContext.extensionUri,
-				mockContext,
-				tim.onSelectionChanged,
-				mockInvokeTool
+				mockInvokeTool,
+				mockOutputPanelProvider
 			);
 
 			provider.resolveWebviewView(
@@ -335,12 +307,63 @@ describe('Webview Message Passing', () => {
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			const calls = (mockOutputPanel.webview.postMessage as sinon.SinonStub).getCalls();
-			const resultMessage = calls.map((c) => c.args[0]).find((m) => m.type === 'result');
+			// Verify result message was sent via OutputPanelProvider
+			assert.ok(
+				(mockOutputPanelProvider.sendResultMessage as sinon.SinonStub).called,
+				'sendResultMessage should be called'
+			);
 
-			assert.ok(resultMessage, 'Result message should be sent');
-			assert.strictEqual(resultMessage.result.success, false);
-			assert.strictEqual(resultMessage.result.error, 'Tool execution failed');
+			const call = (mockOutputPanelProvider.sendResultMessage as sinon.SinonStub).getCall(0);
+			assert.strictEqual(call.args[0].server, mockTool.server, 'Tool server should match');
+			assert.strictEqual(call.args[0].name, mockTool.name, 'Tool name should match');
+			assert.strictEqual(call.args[1].success, true, 'Result should indicate success');
+		});
+
+		it('should send error result to output panel on execution failure', async () => {
+			const mockErrorResult: ToolResult = {
+				success: false,
+				error: 'Tool execution failed',
+				toolName: 'test_tool',
+				executionTime: 50,
+			};
+
+			const mockInvokeTool = sandbox.stub().resolves(mockErrorResult);
+
+			provider = new ToolDetailProvider(
+				mockContext.extensionUri,
+				mockContext,
+				tim.onSelectionChanged,
+				mockInvokeTool,
+				mockOutputPanelProvider
+			);
+
+			provider.resolveWebviewView(
+				mockWebviewView,
+				{} as vscode.WebviewViewResolveContext,
+				{} as vscode.CancellationToken
+			);
+
+			const message = {
+				type: 'executeCommand',
+				tool: mockTool,
+				parameters: {},
+			};
+
+			if (messageHandler) {
+				await messageHandler(message);
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// Verify error result was sent via OutputPanelProvider
+			assert.ok(
+				(mockOutputPanelProvider.sendResultMessage as sinon.SinonStub).called,
+				'sendResultMessage should be called for errors'
+			);
+
+			const call = (mockOutputPanelProvider.sendResultMessage as sinon.SinonStub).getCall(0);
+			assert.strictEqual(call.args[1].success, false, 'Result should indicate failure');
+			assert.strictEqual(call.args[1].error, 'Tool execution failed', 'Error message should match');
 		});
 	});
 
@@ -364,7 +387,8 @@ describe('Webview Message Passing', () => {
 				mockContext.extensionUri,
 				mockContext,
 				tim.onSelectionChanged,
-				mockInvokeTool
+				mockInvokeTool,
+				mockOutputPanelProvider
 			);
 
 			provider.resolveWebviewView(

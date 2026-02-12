@@ -253,6 +253,9 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, executing = false
 					const parsed = parseFloat(value);
 					if (!isNaN(parsed)) {
 						params[paramName] = parsed;
+					} else {
+						// Keep the string value so validation can catch it as invalid
+						params[paramName] = value;
 					}
 				}
 			} else if (element.dataset.jsonType === 'object' || element.dataset.jsonType === 'array') {
@@ -295,14 +298,20 @@ const ToolDetailView: React.FC<ToolDetailViewProps> = ({ tool, executing = false
 			const paramValue = params[paramName];
 
 			// Type validation
-			if (paramValue !== undefined) {
-				if (prop.type === 'number' || prop.type === 'integer') {
+			if (paramValue !== undefined && paramValue !== '') {
+				if (prop.type === 'number') {
 					if (typeof paramValue !== 'number') {
-						errors[paramName] = 'Must be a number';
+						errors[paramName] = 'Must be a valid number';
+					}
+				} else if (prop.type === 'integer') {
+					if (typeof paramValue !== 'number') {
+						errors[paramName] = 'Must be a valid number';
+					} else if (!Number.isInteger(paramValue)) {
+						errors[paramName] = 'Must be an integer';
 					}
 				} else if (element.dataset.jsonType === 'object' || element.dataset.jsonType === 'array') {
 					if (typeof paramValue === 'string') {
-						errors[paramName] = 'Invalid JSON format';
+						errors[paramName] = 'Must be valid JSON';
 					}
 				}
 			}

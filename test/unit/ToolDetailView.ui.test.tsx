@@ -293,7 +293,7 @@ describe('Parameter Validation', () => {
 		fireEvent.click(executeButton);
 
 		// Should show validation error for missing required parameter
-		expect(screen.getByText(/required/i)).toBeInTheDocument();
+		expect(screen.getByText('This field is required')).toBeInTheDocument();
 		// Should not call postMessage when validation fails
 		expect(mockVscode.postMessage).not.toHaveBeenCalled();
 	});
@@ -443,13 +443,13 @@ describe('Parameter Validation', () => {
 		fireEvent.click(executeButton);
 
 		// Should show validation error
-		expect(screen.getByText(/required/i)).toBeInTheDocument();
+		expect(screen.getByText('This field is required')).toBeInTheDocument();
 
 		// Type into the input
 		const input = screen.getByLabelText(/requiredParam/i);
 		fireEvent.change(input, { target: { value: 'some value' } });
 
 		// Validation error should be cleared
-		expect(screen.queryByText(/required/i)).not.toBeInTheDocument();
+		expect(screen.queryByText('This field is required')).not.toBeInTheDocument();
 	});
 });

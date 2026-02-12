@@ -2,11 +2,13 @@ import * as vscode from 'vscode';
 import { ParsedMCPTool } from './types/mcpTool';
 import { registerFindToolsCommand } from './commands/findTools';
 import { ToolDetailProvider } from './providers/ToolDetailProvider';
+import { OutputPanelProvider } from './providers/OutputPanelProvider';
 import { ToolTreeProvider } from './providers/ToolTreeProvider';
 import { TIM } from './services/TIM';
 
 let treeProvider: ToolTreeProvider;
 let detailProvider: ToolDetailProvider;
+let outputPanelProvider: OutputPanelProvider;
 let tim: TIM;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -42,12 +44,17 @@ export function activate(context: vscode.ExtensionContext) {
 	// Pass tree view to provider so it can update description
 	treeProvider.setTreeView(treeView);
 
+	// Create output panel provider
+	outputPanelProvider = new OutputPanelProvider(context.extensionUri);
+	context.subscriptions.push(outputPanelProvider);
+
 	// Create detail provider
 	detailProvider = new ToolDetailProvider(
 		context.extensionUri,
 		context,
 		tim.onSelectionChanged,
-		tim.useTool
+		tim.useTool,
+		outputPanelProvider
 	);
 	context.subscriptions.push(detailProvider);
 

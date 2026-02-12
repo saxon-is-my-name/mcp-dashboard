@@ -5,16 +5,15 @@ import {
 	ToolDetailUpdateMessage,
 	ExecutionStateUpdateMessage,
 } from '../types/webviewMessages';
-import { ToolResult, ToolLoadingMessage, ToolResultMessage } from '../types/toolResult';
+import { ToolResult } from '../types/toolResult';
 import { getToolDetailHtml } from '../templates/toolDetailTemplate';
-import { getOutputPanelHtml } from '../templates/outputPanelTemplate';
+import { OutputPanelProvider } from './OutputPanelProvider';
 
 /**
  * WebviewViewProvider for displaying tool details
  */
 export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Disposable {
 	private _view?: vscode.WebviewView;
-	private _outputPanel?: vscode.WebviewPanel;
 	private _selectionSubscription: vscode.Disposable;
 
 	constructor(
@@ -24,7 +23,8 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		private readonly invokeTool: (
 			tool: ParsedMCPTool,
 			parameters: Record<string, unknown>
-		) => Promise<ToolResult>
+		) => Promise<ToolResult>,
+		private readonly outputPanelProvider: OutputPanelProvider
 	) {
 		// Subscribe to selection changes from coordination service
 		this._selectionSubscription = this.onToolChange((tool) => {
@@ -37,10 +37,6 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 	 */
 	dispose(): void {
 		this._selectionSubscription.dispose();
-		if (this._outputPanel) {
-			this._outputPanel.dispose();
-			this._outputPanel = undefined;
-		}
 	}
 
 	public resolveWebviewView(
@@ -116,40 +112,9 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 			this._view.webview.postMessage(message);
 		}
 
-		// Create or show output panel
-		if (!this._outputPanel) {
-			this._outputPanel = vscode.window.createWebviewPanel(
-				'mcpOutput',
-				'MCP Output',
-				vscode.ViewColumn.One,
-				{
-					enableScripts: true,
-					localResourceRoots: [this._extensionUri],
-					retainContextWhenHidden: true,
-				}
-			);
-
-			this._outputPanel.webview.html = this._getOutputPanelHtml(this._outputPanel.webview);
-
-			// Clear reference when panel is disposed
-			this._outputPanel.onDidDispose(() => {
-				this._outputPanel = undefined;
-			});
-		} else {
-			// Reveal existing panel
-			this._outputPanel.reveal();
-		}
-
-		// Update panel title
-		this._outputPanel.title = `${tool.server} › ${tool.name}`;
-
-		// Send loading message
-		const loadingMessage: ToolLoadingMessage = {
-			type: 'loading',
-			server: tool.server,
-			command: tool.name,
-		};
-		this._outputPanel.webview.postMessage(loadingMessage);
+		// Show output panel and send loading message
+		this.outputPanelProvider.showOutputPanel(tool);
+		this.outputPanelProvider.sendLoadingMessage(tool);
 
 		const result = await this.invokeTool(tool, parameters);
 
@@ -162,21 +127,8 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 			this._view.webview.postMessage(message);
 		}
 
-		// Format the result
-		const formattedOutput = JSON.stringify(result, null, 2);
-
 		// Send result to output panel
-		if (this._outputPanel) {
-			const resultMessage: ToolResultMessage = {
-				type: 'result',
-				server: tool.server,
-				command: tool.name,
-				output: formattedOutput,
-				result: result,
-				timestamp: new Date().toLocaleString(),
-			};
-			this._outputPanel.webview.postMessage(resultMessage);
-		}
+		this.outputPanelProvider.sendResultMessage(tool, result);
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
@@ -186,14 +138,5 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		);
 
 		return getToolDetailHtml(scriptUri.toString(), webview.cspSource);
-	}
-
-	private _getOutputPanelHtml(webview: vscode.Webview) {
-		// Get the URI for the bundled output panel script
-		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this._extensionUri, 'out', 'outputPanel.js')
-		);
-
-		return getOutputPanelHtml(scriptUri.toString(), webview.cspSource);
 	}
 }
