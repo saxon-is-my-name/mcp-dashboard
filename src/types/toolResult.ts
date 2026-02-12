@@ -34,6 +34,7 @@ export interface ToolResultMessage {
 	type: 'result';
 	server: string;
 	command: string;
+	output: string; // Formatted JSON string
 	result: ToolResult;
 	timestamp: string;
 }

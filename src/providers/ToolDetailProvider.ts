@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
 import { ParsedMCPTool } from '../types/mcpTool';
-import { WebviewToExtensionMessage } from '../types/webviewMessages';
-import { ToolResult } from '../types/toolResult';
+import {
+	WebviewToExtensionMessage,
+	ToolDetailUpdateMessage,
+	ExecutionStateUpdateMessage,
+} from '../types/webviewMessages';
+import { ToolResult, ToolLoadingMessage, ToolResultMessage } from '../types/toolResult';
 import { getToolDetailHtml } from '../templates/toolDetailTemplate';
 import { getOutputPanelHtml } from '../templates/outputPanelTemplate';
 
@@ -82,18 +86,20 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 
 		// If no tool, send empty state
 		if (!tool) {
-			this._view.webview.postMessage({
+			const message: ToolDetailUpdateMessage = {
 				type: 'toolDetailUpdate',
 				tool: undefined,
-			});
+			};
+			this._view.webview.postMessage(message);
 			return;
 		}
 
 		// Send tool details
-		this._view.webview.postMessage({
+		const message: ToolDetailUpdateMessage = {
 			type: 'toolDetailUpdate',
 			tool: tool,
-		});
+		};
+		this._view.webview.postMessage(message);
 	}
 
 	private async _handleExecuteCommand(
@@ -102,10 +108,11 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 	) {
 		// Notify webview that execution is starting
 		if (this._view) {
-			this._view.webview.postMessage({
+			const message: ExecutionStateUpdateMessage = {
 				type: 'executionStateUpdate',
 				executing: true,
-			});
+			};
+			this._view.webview.postMessage(message);
 		}
 
 		// Create or show output panel
@@ -136,20 +143,22 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 		this._outputPanel.title = `${tool.server} › ${tool.name}`;
 
 		// Send loading message
-		this._outputPanel.webview.postMessage({
+		const loadingMessage: ToolLoadingMessage = {
 			type: 'loading',
 			server: tool.server,
 			command: tool.name,
-		});
+		};
+		this._outputPanel.webview.postMessage(loadingMessage);
 
 		const result = await this.invokeTool(tool, parameters);
 
 		// Notify webview that execution is complete
 		if (this._view) {
-			this._view.webview.postMessage({
+			const message: ExecutionStateUpdateMessage = {
 				type: 'executionStateUpdate',
 				executing: false,
-			});
+			};
+			this._view.webview.postMessage(message);
 		}
 
 		// Format the result
@@ -157,14 +166,15 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 
 		// Send result to output panel
 		if (this._outputPanel) {
-			this._outputPanel.webview.postMessage({
+			const resultMessage: ToolResultMessage = {
 				type: 'result',
 				server: tool.server,
 				command: tool.name,
 				output: formattedOutput,
 				result: result,
 				timestamp: new Date().toLocaleString(),
-			});
+			};
+			this._outputPanel.webview.postMessage(resultMessage);
 		}
 	}
 

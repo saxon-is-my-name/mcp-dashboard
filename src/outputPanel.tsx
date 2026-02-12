@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ToolResult } from './types/toolResult';
+import { ToolResult, ToolLoadingMessage, ToolResultMessage } from './types/toolResult';
 
 interface OutputState {
 	type: 'loading' | 'result';
@@ -15,7 +15,7 @@ const OutputPanel: React.FC = () => {
 
 	React.useEffect(() => {
 		// Listen for messages from the extension
-		const messageHandler = (event: MessageEvent) => {
+		const messageHandler = (event: MessageEvent<ToolLoadingMessage | ToolResultMessage>) => {
 			const message = event.data;
 
 			if (message.type === 'loading') {

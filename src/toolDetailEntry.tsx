@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import ToolDetailView from './ui/components/ToolDetailView';
 import { ParsedMCPTool } from './types/mcpTool';
+import { ToolDetailMessage } from './types/webviewMessages';
 
 const App: React.FC = () => {
 	const [tool, setTool] = React.useState<ParsedMCPTool | undefined>(undefined);
@@ -9,7 +10,7 @@ const App: React.FC = () => {
 
 	React.useEffect(() => {
 		// Handle messages from extension
-		const messageHandler = (event: MessageEvent) => {
+		const messageHandler = (event: MessageEvent<ToolDetailMessage>) => {
 			const message = event.data;
 
 			switch (message.type) {

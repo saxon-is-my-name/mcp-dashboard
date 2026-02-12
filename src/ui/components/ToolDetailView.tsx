@@ -49,11 +49,14 @@ const ParameterInputs: React.FC<ParameterInputsProps> = ({
 						onChange={() => handleChange(paramName)}
 					>
 						<option value="">-- Select --</option>
-						{enumValues.map((value) => (
-							<option key={value} value={value}>
-								{value}
-							</option>
-						))}
+						{enumValues.map((value, idx) => {
+							const strValue = String(value);
+							return (
+								<option key={idx} value={strValue}>
+									{strValue}
+								</option>
+							);
+						})}
 					</select>
 					{description && <div className="parameter-description">{description}</div>}
 					{hasError && <div className="validation-error">{validationErrors[paramName]}</div>}
