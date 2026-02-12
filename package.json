@@ -96,16 +96,6 @@
 					"group": "navigation@3"
 				}
 			]
-		},
-		"configuration": {
-			"title": "MCP",
-			"properties": {
-				"mcp.autoFocusFirstInput": {
-					"type": "boolean",
-					"default": true,
-					"description": "Automatically focus the first input field when a tool is selected"
-				}
-			}
 		}
 	},
 	"scripts": {

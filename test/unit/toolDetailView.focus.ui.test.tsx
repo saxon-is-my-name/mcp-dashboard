@@ -11,15 +11,10 @@ const mockVscode = {
 // Mock vscode workspace configuration
 const mockWorkspaceConfig: {
 	get: jest.Mock<any, [string, any]>;
-	_autoFocusFirstInput: boolean | undefined;
 } = {
 	get: jest.fn((key: string, defaultValue: any): any => {
-		if (key === 'autoFocusFirstInput') {
-			return mockWorkspaceConfig._autoFocusFirstInput ?? defaultValue;
-		}
 		return defaultValue;
 	}),
-	_autoFocusFirstInput: true as boolean | undefined,
 };
 
 beforeAll(() => {
@@ -38,7 +33,6 @@ afterAll(() => {
 
 beforeEach(() => {
 	mockVscode.postMessage.mockClear();
-	mockWorkspaceConfig._autoFocusFirstInput = true;
 });
 
 describe('ToolDetailView - Auto-focus First Input', () => {
