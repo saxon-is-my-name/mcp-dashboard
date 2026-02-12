@@ -5,7 +5,7 @@ describe('Keyboard Navigation - Phase 1', () => {
 	let extension: vscode.Extension<any>;
 
 	before(async () => {
-		extension = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension')!;
+		extension = vscode.extensions.getExtension('saxonbruce.mcp-dashboard')!;
 		await extension.activate();
 	});
 

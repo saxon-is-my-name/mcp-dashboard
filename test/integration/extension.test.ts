@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 describe('Extension Activation', () => {
 	it('should activate the extension', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		assert.ok(ext, 'Extension not found');
 		await ext!.activate();
 		assert.strictEqual(ext!.isActive, true, 'Extension did not activate');
@@ -12,7 +12,7 @@ describe('Extension Activation', () => {
 
 describe('Provider Registration', () => {
 	it('should register tree view provider', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		assert.ok(ext, 'Extension not found');
 		await ext!.activate();
 
@@ -26,7 +26,7 @@ describe('Provider Registration', () => {
 	});
 
 	it('should register detail webview provider', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		await ext!.activate();
 
 		const extExports = ext!.exports;
@@ -38,7 +38,7 @@ describe('Provider Registration', () => {
 	});
 
 	it('should register mcp.selectTool command', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		await ext!.activate();
 
 		// Try to execute the command - should not throw
@@ -51,7 +51,7 @@ describe('Provider Registration', () => {
 	});
 
 	it('should initially load and refresh tree with tools', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		await ext!.activate();
 
 		const treeProvider = ext!.exports.getTreeProvider();
@@ -65,7 +65,7 @@ describe('Provider Registration', () => {
 	});
 
 	it('should share TIM instance between providers', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		await ext!.activate();
 
 		const tim1 = ext!.exports.getTIM();
@@ -82,7 +82,7 @@ describe('Provider Registration', () => {
 	});
 
 	it('should register mcp.refreshTools command', async () => {
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		await ext!.activate();
 
 		const treeProvider = ext!.exports.getTreeProvider();

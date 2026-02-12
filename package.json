@@ -1,9 +1,9 @@
 {
-	"name": "vscode-mcp-extension",
-	"displayName": "MCP Extension",
+	"name": "mcp-dashboard",
+	"displayName": "MCP Dashboard",
 	"description": "VS Code extension for MCP dashboard integration.",
 	"version": "0.0.1",
-	"publisher": "mcp-dashboard",
+	"publisher": "saxonbruce",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/saxon-is-my-name/mcp-dashboard.git"

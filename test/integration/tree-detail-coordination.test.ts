@@ -41,7 +41,7 @@ describe('Tree-Detail Coordination Integration', () => {
 
 	beforeEach(async () => {
 		// Get the activated extension's providers
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		await ext!.activate();
 
 		const extExports = ext!.exports;
@@ -147,7 +147,7 @@ describe('Tree-Detail Coordination Integration', () => {
 		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		// Get the extension context to access its workspace state
-		const ext = vscode.extensions.getExtension('mcp-dashboard.vscode-mcp-extension');
+		const ext = vscode.extensions.getExtension('saxonbruce.mcp-dashboard');
 		const extContext = (ext!.exports.getTIM() as any)._context;
 
 		// Create new service instance with the same context (simulating VS Code restart)
