@@ -3,8 +3,8 @@ const path = require('path');
 module.exports = {
   mode: 'production',
   entry: {
-    outputPanel: './src/outputPanelEntry.tsx',
-    toolDetail: './src/toolDetailEntry.tsx'
+    outputPanel: './src/ui/entries/outputPanelEntry.tsx',
+    toolDetail: './src/ui/entries/toolDetailEntry.tsx'
   },
   output: {
     path: path.resolve(__dirname, 'out'),

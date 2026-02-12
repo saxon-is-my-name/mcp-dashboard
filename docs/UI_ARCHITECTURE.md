@@ -10,21 +10,21 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 ┌─────────────────────────────────────────────────────────┐
 │                    VS Code Extension                    │
 │                                                         │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │          TIM (Tool Interaction Manager)          │  │
-│  │  - Manages selected tool state                   │  │
-│  │  - Persists selection to workspace state         │  │
-│  │  - Notifies listeners of selection changes       │  │
-│  │  - Uses Toolbox for tool execution               │  │
-│  └──────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │          TIM (Tool Interaction Manager)          │   │
+│  │  - Manages selected tool state                   │   │
+│  │  - Persists selection to workspace state         │   │
+│  │  - Notifies listeners of selection changes       │   │
+│  │  - Uses Toolbox for tool execution               │   │
+│  └──────────────────────────────────────────────────┘   │
 │              │                           │              │
 │              ▼                           ▼              │
-│  ┌─────────────────────┐   ┌────────────────────────┐  │
-│  │  ToolTreeProvider   │   │  ToolDetailProvider    │  │
-│  │  - Displays servers │   │  - Shows tool details  │  │
-│  │  - Lists tools      │   │  - Renders parameters  │  │
-│  │  - Handles clicks   │   │  - Executes tools      │  │
-│  └─────────────────────┘   └────────────────────────┘  │
+│  ┌─────────────────────┐   ┌────────────────────────┐   │
+│  │  ToolTreeProvider   │   │  ToolDetailProvider    │   │
+│  │  - Displays servers │   │  - Shows tool details  │   │
+│  │  - Lists tools      │   │  - Renders parameters  │   │
+│  │  - Handles clicks   │   │  - Executes tools      │   │
+│  └─────────────────────┘   └────────────────────────┘   │
 │              │                           │              │
 └──────────────┼───────────────────────────┼──────────────┘
                │                           │
@@ -42,6 +42,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 **Location**: `src/providers/ToolTreeProvider.ts`
 
 **Responsibilities**:
+
 - Implements `vscode.TreeDataProvider` interface
 - Organizes tools into a two-level hierarchy (servers → tools)
 - Displays server nodes with server icon (`$(server)`) and tooltips
@@ -53,6 +54,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - Triggers tree refresh when tool data changes
 
 **Tree Structure**:
+
 ```
 📦 Server 1
   └─ 🔧 Tool 1
@@ -66,6 +68,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 **Location**: `src/providers/ToolDetailProvider.ts`
 
 **Responsibilities**:
+
 - Implements `vscode.WebviewViewProvider` interface
 - Renders tool details in a webview panel
 - Generates HTML from templates (`src/templates/toolDetailTemplate.ts`)
@@ -75,6 +78,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - Handles webview message passing
 
 **Webview States**:
+
 - **Empty**: "Select a tool from the tree to view details"
 - **Loading**: "Loading tool details..."
 - **Error**: Shows error message if tool fetch fails
@@ -85,6 +89,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 **Location**: `src/services/TIM.ts`
 
 **Responsibilities**:
+
 - Central state management for selected tool
 - Manages tool interaction through integrated Toolbox
 - Provides `selectTool(tool)` and `getSelectedTool()` methods
@@ -97,6 +102,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - Singleton pattern ensures consistent state across providers
 
 **State Persistence**:
+
 ```typescript
 // Stored in workspace state
 {
@@ -158,6 +164,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
    - Click filter icon again to edit existing filter
 
 **Filter Display**:
+
 - Active filter shown in tree view description: `Filter: "database"`
 - No description shown when filter is cleared
 - Clear filter button only appears when filter is active (conditional menu using `mcp.filterActive` context)
@@ -165,6 +172,7 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 - Keyboard shortcut (Ctrl+F / Cmd+F) makes it feel like native find functionality
 
 **Filter Matching**:
+
 - Tool name: `query` matches tools with "query" in name
 - Description: `SQL` matches tools with "SQL" in description
 - Tags: `http` matches tools with "http" tag
@@ -175,29 +183,75 @@ The MCP Dashboard extension uses a **TreeView + Webview** architecture to provid
 
 ## React Components
 
+### File Organization
+
+**Component Structure**:
+
+```
+src/ui/
+├── components/          # Pure React components
+│   ├── ToolDetailView.tsx
+│   └── OutputPanel.tsx
+└── entries/            # Webpack entry points (state + message handling)
+    ├── toolDetailEntry.tsx
+    └── outputPanelEntry.tsx
+```
+
+**Pattern**: Entry files manage state and message handling, then pass props to pure components. This separates concerns and makes components more testable.
+
 ### ToolDetailView
 
 **Location**: `src/ui/components/ToolDetailView.tsx`
 
 **Props**:
+
 - `tool?: ParsedMCPTool` - The tool to display
-- `loading?: boolean` - Whether tool details are being fetched
+- `executing?: boolean` - Whether tool is currently executing
 - `error?: string` - Error message if tool fetch failed
 
 **Features**:
+
 - Dynamic parameter inputs based on JSON Schema
 - Type-specific input rendering (string, number, boolean, object, array, enum)
 - Client-side validation for required fields
 - Real-time validation error display
 - Clear validation errors on input change
+- Auto-focus first input field when tool loads
+- Keyboard navigation (Shift+Tab to focus tree)
 
 **Parameter Types Supported**:
+
 - `string` - Text input
 - `number/integer` - Numeric input with validation
 - `boolean` - Checkbox
 - `object` - JSON textarea with syntax validation
 - `array` - JSON textarea with syntax validation
 - `enum` - Dropdown select
+
+### OutputPanel
+
+**Location**: `src/ui/components/OutputPanel.tsx`
+
+**Features**:
+
+- Displays loading state during tool execution
+- Shows formatted execution results with success/error styling
+- Displays execution time when available
+- Formats output in readable format
+
+### Webview Entry Points
+
+**ToolDetail Entry** (`src/ui/entries/toolDetailEntry.tsx`):
+
+- Listens for `toolDetailUpdate` and `executionStateUpdate` messages
+- Manages tool and executing state
+- Renders `ToolDetailView` with current state
+
+**OutputPanel Entry** (`src/ui/entries/outputPanelEntry.tsx`):
+
+- Listens for `loading` and `result` messages from extension
+- Manages output state (type, server, command, output, result, timestamp)
+- Renders `OutputPanel` with current state
 
 ## Persistence Mechanism
 
@@ -216,6 +270,7 @@ const savedTool = context.workspaceState.get<ParsedMCPTool>('mcp.selectedTool');
 ### Session Restoration
 
 On extension activation:
+
 1. TIM checks workspace state for saved tool in constructor
 2. If found, restores selection internally
 3. ToolDetailProvider can query TIM for restored selection
@@ -224,13 +279,19 @@ On extension activation:
 ## Testing Strategy
 
 ### Integration Tests
+
 - `test/integration/tree-detail-coordination.test.ts` - Tests coordination between components
 - `test/integration/providers/ToolTreeProvider.test.ts` - Tests tree provider logic
 - `test/integration/providers/ToolDetailProvider.test.ts` - Tests detail provider logic
+- `test/integration/providers/OutputPanelProvider.test.ts` - Tests output panel provider logic
 - `test/integration/services/Tim.test.ts` - Tests TIM state management and tool operations
+- `test/integration/webview-messages.test.ts` - Tests message passing between extension and webviews
 
 ### UI Tests
-- `test/ui/ToolDetailView.ui.test.tsx` - Tests React component rendering and validation
+
+- `test/unit/ToolDetailView.ui.test.tsx` - Tests ToolDetailView component rendering and validation
+- `test/unit/outputPanel.ui.test.tsx` - Tests OutputPanel component rendering
+- `test/unit/toolDetailView.focus.ui.test.tsx` - Tests focus and keyboard navigation
 - Uses Jest + React Testing Library with jsdom
 
 ## Extension Points
@@ -256,8 +317,9 @@ To add context menu actions:
 
 To customize output display:
 
-1. Modify `formatToolResult()` in `src/providers/ToolDetailProvider.ts`
-2. Update React component in `src/outputPanel.tsx`
+1. Modify `formatToolResult()` in `src/providers/OutputPanelProvider.ts`
+2. Update React component in `src/ui/components/OutputPanel.tsx`
+3. Update message handling in `src/ui/entries/outputPanelEntry.tsx` if needed
 
 ## Performance Considerations
 
@@ -271,6 +333,7 @@ To customize output display:
 ## Future Enhancements
 
 Potential improvements:
+
 - Tool favorites/bookmarks
 - Execution history
 - Parameter templates/presets

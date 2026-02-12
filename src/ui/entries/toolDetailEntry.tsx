@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import ToolDetailView from './ui/components/ToolDetailView';
-import { ParsedMCPTool } from './types/mcpTool';
-import { ToolDetailMessage } from './types/webviewMessages';
+import ToolDetailView from '../components/ToolDetailView';
+import { ParsedMCPTool } from '../../types/mcpTool';
+import { ToolDetailMessage } from '../../types/webviewMessages';
 
 const App: React.FC = () => {
 	const [tool, setTool] = React.useState<ParsedMCPTool | undefined>(undefined);
