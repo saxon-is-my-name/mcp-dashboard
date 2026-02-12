@@ -11,7 +11,7 @@ let detailProvider: ToolDetailProvider;
 let outputPanelProvider: OutputPanelProvider;
 let tim: TIM;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	// Set initial context for filter state
 	vscode.commands.executeCommand('setContext', 'mcp.filterActive', false);
 	// Set initial context for tool selected state
@@ -86,14 +86,12 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	// Fetch and refresh tree with tools
-	tim
-		.getTools()
-		.then((tools) => {
-			treeProvider.refresh(tools);
-		})
-		.catch((error) => {
-			console.error('Error loading initial tools:', error);
-		});
+	try {
+		const tools = await tim.getTools();
+		treeProvider.refresh(tools);
+	} catch (error) {
+		console.error('Error loading initial tools:', error);
+	}
 
 	// Export minimal API for integration tests only
 	return {

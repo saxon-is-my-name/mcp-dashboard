@@ -76,7 +76,7 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 	/**
 	 * Show tool details in the webview
 	 */
-	public async showToolDetail(tool?: ParsedMCPTool) {
+	public showToolDetail(tool?: ParsedMCPTool): void {
 		if (!this._view) {
 			return;
 		}
