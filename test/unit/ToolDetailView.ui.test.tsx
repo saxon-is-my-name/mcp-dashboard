@@ -270,3 +270,186 @@ describe('ToolDetailView', () => {
 		});
 	});
 });
+
+describe('Parameter Validation', () => {
+	it('should validate required parameters are provided', () => {
+		const mockTool: ParsedMCPTool = {
+			name: 'test_tool',
+			description: 'Test',
+			server: 'test_server',
+			fullName: 'test_server_test_tool',
+			inputSchema: {
+				type: 'object',
+				properties: {
+					requiredParam: { type: 'string', description: 'Required parameter' },
+				},
+				required: ['requiredParam'],
+			},
+		};
+
+		render(<ToolDetailView tool={mockTool} />);
+
+		const executeButton = screen.getByRole('button', { name: /execute/i });
+		fireEvent.click(executeButton);
+
+		// Should show validation error for missing required parameter
+		expect(screen.getByText(/required/i)).toBeInTheDocument();
+		// Should not call postMessage when validation fails
+		expect(mockVscode.postMessage).not.toHaveBeenCalled();
+	});
+
+	it('should validate number type parameters', () => {
+		const mockTool: ParsedMCPTool = {
+			name: 'test_tool',
+			description: 'Test',
+			server: 'test_server',
+			fullName: 'test_server_test_tool',
+			inputSchema: {
+				type: 'object',
+				properties: {
+					numberParam: { type: 'number', description: 'Number parameter' },
+				},
+				required: ['numberParam'],
+			},
+		};
+
+		render(<ToolDetailView tool={mockTool} />);
+
+		const input = screen.getByLabelText(/numberParam/i);
+		fireEvent.change(input, { target: { value: 'not-a-number' } });
+
+		const executeButton = screen.getByRole('button', { name: /execute/i });
+		fireEvent.click(executeButton);
+
+		// Should show validation error for invalid number
+		expect(screen.getByText(/must be a valid number/i)).toBeInTheDocument();
+		expect(mockVscode.postMessage).not.toHaveBeenCalled();
+	});
+
+	it('should validate integer type parameters', () => {
+		const mockTool: ParsedMCPTool = {
+			name: 'test_tool',
+			description: 'Test',
+			server: 'test_server',
+			fullName: 'test_server_test_tool',
+			inputSchema: {
+				type: 'object',
+				properties: {
+					intParam: { type: 'integer', description: 'Integer parameter' },
+				},
+				required: ['intParam'],
+			},
+		};
+
+		render(<ToolDetailView tool={mockTool} />);
+
+		const input = screen.getByLabelText(/intParam/i);
+		fireEvent.change(input, { target: { value: '3.14' } });
+
+		const executeButton = screen.getByRole('button', { name: /execute/i });
+		fireEvent.click(executeButton);
+
+		// Should show validation error for non-integer
+		expect(screen.getByText(/must be an integer/i)).toBeInTheDocument();
+		expect(mockVscode.postMessage).not.toHaveBeenCalled();
+	});
+
+	it('should validate JSON object parameters', () => {
+		const mockTool: ParsedMCPTool = {
+			name: 'test_tool',
+			description: 'Test',
+			server: 'test_server',
+			fullName: 'test_server_test_tool',
+			inputSchema: {
+				type: 'object',
+				properties: {
+					jsonParam: { type: 'object', description: 'JSON object parameter' },
+				},
+				required: ['jsonParam'],
+			},
+		};
+
+		render(<ToolDetailView tool={mockTool} />);
+
+		const textarea = screen.getByLabelText(/jsonParam/i);
+		fireEvent.change(textarea, { target: { value: '{invalid json}' } });
+
+		const executeButton = screen.getByRole('button', { name: /execute/i });
+		fireEvent.click(executeButton);
+
+		// Should show validation error for invalid JSON
+		expect(screen.getByText(/must be valid JSON/i)).toBeInTheDocument();
+		expect(mockVscode.postMessage).not.toHaveBeenCalled();
+	});
+
+	it('should accept valid parameters and execute', () => {
+		const mockTool: ParsedMCPTool = {
+			name: 'test_tool',
+			description: 'Test',
+			server: 'test_server',
+			fullName: 'test_server_test_tool',
+			inputSchema: {
+				type: 'object',
+				properties: {
+					stringParam: { type: 'string', description: 'String parameter' },
+					numberParam: { type: 'number', description: 'Number parameter' },
+				},
+				required: ['stringParam', 'numberParam'],
+			},
+		};
+
+		render(<ToolDetailView tool={mockTool} />);
+
+		const stringInput = screen.getByLabelText(/stringParam/i);
+		const numberInput = screen.getByLabelText(/numberParam/i);
+
+		fireEvent.change(stringInput, { target: { value: 'test value' } });
+		fireEvent.change(numberInput, { target: { value: '42' } });
+
+		const executeButton = screen.getByRole('button', { name: /execute/i });
+		fireEvent.click(executeButton);
+
+		// Should execute without validation errors
+		expect(mockVscode.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: 'executeCommand',
+				tool: mockTool,
+				parameters: expect.objectContaining({
+					stringParam: 'test value',
+					numberParam: 42,
+				}),
+			})
+		);
+	});
+
+	it('should clear validation errors when input changes', () => {
+		const mockTool: ParsedMCPTool = {
+			name: 'test_tool',
+			description: 'Test',
+			server: 'test_server',
+			fullName: 'test_server_test_tool',
+			inputSchema: {
+				type: 'object',
+				properties: {
+					requiredParam: { type: 'string', description: 'Required parameter' },
+				},
+				required: ['requiredParam'],
+			},
+		};
+
+		render(<ToolDetailView tool={mockTool} />);
+
+		const executeButton = screen.getByRole('button', { name: /execute/i });
+		fireEvent.click(executeButton);
+
+		// Should show validation error
+		expect(screen.getByText(/required/i)).toBeInTheDocument();
+
+		// Type into the input
+		const input = screen.getByLabelText(/requiredParam/i);
+		fireEvent.change(input, { target: { value: 'some value' } });
+
+		// Validation error should be cleared
+		expect(screen.queryByText(/required/i)).not.toBeInTheDocument();
+	});
+});

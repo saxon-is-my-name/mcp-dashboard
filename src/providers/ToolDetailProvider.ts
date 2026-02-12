@@ -72,7 +72,8 @@ export class ToolDetailProvider implements vscode.WebviewViewProvider, vscode.Di
 				}
 			},
 			undefined,
-			this._context.subscriptions //todo should this be the passed context or the this? or should we assign the passed context to this._context in the constructor?
+			// Add to extension context subscriptions for proper cleanup
+			this._context.subscriptions
 		);
 	}
 
