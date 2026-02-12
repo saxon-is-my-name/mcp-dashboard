@@ -1,89 +1,30 @@
 # MCP Dashboard VS Code Extension
 
-A VS Code extension for MCP (Model Context Protocol) dashboard integration.
+GUI to invoke MCP tools from a panel in VS Code, outside of the chat interface.
 
-## Features
+![Screenshot of MCP Dashboard being used to invoke a MCP tool](/images/screenshot.png)
 
-The MCP Dashboard provides a comprehensive interface for browsing and executing MCP tools:
+# Using
 
-- **TreeView Navigation**: Tools are organized by server in a collapsible tree view with intuitive icons. Servers are expandable to reveal their available tools.
-- **Integrated Filter**: Filter tools by name, description, tags, or server using Ctrl+F (Cmd+F on Mac) when focused on the tree, or click the filter icon. Active filters are shown in the panel description for visibility. Press Escape to clear the filter.
-- **Detail Panel**: Select any tool from the tree to view its details, parameters, and description in a dedicated webview panel below.
-- **Persistent Selection**: Your selected tool is remembered across VS Code sessions, so you can pick up where you left off.
-- **Parameter Input**: Dynamic forms adapt to each tool's parameter schema, supporting strings, numbers, booleans, objects, arrays, and enums.
-- **Real-time Execution**: Execute tools directly from the detail panel with automatic parameter validation and result display.
+This extension can use tools from any MCP server you already have configured in VS Code. Click the extension icon or
+use the command ">MCP: Find Tools" to bring up the list of tools you have available. You can then enter any possible
+parameters to the tool and click execute. The result will be displayed in your editor.
+
+# Why use it?
+
+MCP often just wraps existing APIs, and VS Code handles authentication for those services. This extension provides a convenient way to access authenticated APIs directly.
+By invoking tools outside an AI agent, you can maintain full control over usage and receive unprocessed responses.
 
 ## Development
 
-### Prerequisites
+There is a dev container definition you can use.
+From outside the dev container you can test the plugin with
+`npm run compile && code --extensionDevelopmentPath=. .`
 
-- Node.js >= 18
-- VS Code >= 1.70.0
+## AI Use
 
-### Installation
-
-```bash
-npm install
-```
-
-### Building
-
-```bash
-npm run compile       # Build TypeScript
-npm run watch         # Watch mode for development
-```
-
-## Testing
-
-This project uses three different testing approaches for different types of code:
-
-### 1. VS Code Integration Tests
-
-Tests that interact with the VS Code API and extension host. These tests require a display server (X11 or Xvfb) and launch a full VS Code instance.
-
-```bash
-npm test
-```
-
-- **Framework**: Mocha with `@vscode/test-electron`
-- **Location**: `test/*.test.ts`, `test/suite/`
-- **Environment**: Requires VS Code and display (uses xvfb-run in container)
-- **Use for**: Extension activation, VS Code commands, API integration
-
-### 2. Pure Logic Unit Tests
-
-Fast, isolated tests for business logic that doesn't depend on VS Code APIs or webviews. Can run in any environment without VS Code.
-
-```bash
-npm run unit-test
-```
-
-- **Framework**: Mocha with ts-node
-- **Location**: `test/unit/**/*.test.ts`
-- **Environment**: Node.js only, no VS Code required
-- **Use for**: Data models, utilities, helper functions
-
-> **Note**: No unit tests exist yet. Place pure logic/unit tests in `test/unit/` as you extract testable business logic.
-
-### 3. React Component UI Tests
-
-Tests for React components used in webview panels. Uses jsdom to simulate a browser environment.
-
-```bash
-npx jest
-```
-
-- **Framework**: Jest with React Testing Library
-- **Location**: `test/**/*.ui.test.tsx`
-- **Environment**: jsdom (no VS Code required)
-- **Use for**: React components, webview UI logic
-
-### Test Configuration Files
-
-- **`.mocharc.js`**: Mocha configuration for unit tests
-- **`jest.config.js`**: Jest configuration for React UI tests
-- **`test/suite/index.js`**: Entry point for VS Code integration tests
-
-## License
-
-See LICENSE file for details.
+I used AI to generate a lot of this codebase using the [Orchestra agent workflow](https://github.com/ShepAlderson/copilot-orchestra).
+That got me 80% of the way there and then I needed to do a lot of refactoring to get it into a better state.
+So if you see some code you think is terrible, the AI wrote it. But if you see some code that you think is good, I wrote it :p
+But seriously, I've reviewed the output pretty thoroughly and written enough of this project by hand that I have confidence
+in its quality.

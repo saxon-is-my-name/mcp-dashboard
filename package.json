@@ -4,6 +4,10 @@
 	"description": "VS Code extension for MCP dashboard integration.",
 	"version": "0.0.1",
 	"publisher": "mcp-dashboard",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/saxon-is-my-name/mcp-dashboard.git"
+	},
 	"engines": {
 		"vscode": ">=1.109.0"
 	},
@@ -108,8 +112,8 @@
 		"test:ui": "jest",
 		"lint": "eslint src test --ext .ts,.tsx",
 		"lint:fix": "eslint src test --ext .ts,.tsx --fix",
-		"format": "prettier --write \"src/**/*.{ts,tsx,json,html}\" \"test/**/*.{ts,tsx,json,html}\"",
-		"format:check": "prettier --check \"src/**/*.{ts,tsx,json,html}\" \"test/**/*.{ts,tsx,json,html}\"",
+		"format": "prettier --write \"src/**/*.{ts,tsx,json,html}\" \"test/**/*.{ts,tsx,json,html}\" \"*.{md}\"",
+		"format:check": "prettier --check \"src/**/*.{ts,tsx,json,html}\" \"test/**/*.{ts,tsx,json,html}\" \"*.{md}\"",
 		"prepare": "husky"
 	},
 	"devDependencies": {
