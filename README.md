@@ -21,6 +21,10 @@ There is a dev container definition you can use.
 From outside the dev container you can test the plugin with
 `npm run compile && code --extensionDevelopmentPath=. .`
 
+Run unit tests using `npm run test:ui`
+
+Full integration tests using `@vscode/test-electron` run using `npm test`
+
 ## AI Use
 
 I used AI to generate a lot of this codebase using the [Orchestra agent workflow](https://github.com/ShepAlderson/copilot-orchestra).

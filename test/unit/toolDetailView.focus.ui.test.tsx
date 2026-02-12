@@ -8,22 +8,8 @@ const mockVscode = {
 	postMessage: jest.fn(),
 };
 
-// Mock vscode workspace configuration
-const mockWorkspaceConfig: {
-	get: jest.Mock<any, [string, any]>;
-} = {
-	get: jest.fn((key: string, defaultValue: any): any => {
-		return defaultValue;
-	}),
-};
-
 beforeAll(() => {
 	(global as any).acquireVsCodeApi = () => mockVscode;
-	(global as any).vscode = {
-		workspace: {
-			getConfiguration: jest.fn(() => mockWorkspaceConfig),
-		},
-	};
 });
 
 afterAll(() => {
